@@ -1,0 +1,94 @@
+.provider-directory .provider-grid {
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.provider-directory .provider-card {
+  min-height: 224px;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 9px;
+  padding: 20px 14px;
+}
+
+.provider-directory .provider-logo {
+  width: 92px;
+  height: 92px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.provider-directory .provider-logo img {
+  width: 76px;
+  height: 76px;
+}
+
+.provider-directory .provider-logo > span {
+  font-size: 50px;
+}
+
+.provider-card-title {
+  max-width: 100%;
+  color: var(--ink);
+  font: 600 15px/1.25 var(--serif);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.provider-card-detail {
+  min-height: 12px;
+  color: #818a7e;
+  font-size: 9px;
+  text-align: center;
+}
+
+.provider-directory .provider-card-count {
+  justify-content: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.provider-directory .provider-card-count b {
+  font-size: 30px;
+}
+
+.provider-detail-banner .provider-logo {
+  width: 52px;
+  height: 52px;
+  border: 1px solid #e9ece5;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.provider-detail-banner .provider-logo img {
+  width: 38px;
+  height: 38px;
+}
+
+@media (max-width: 700px) {
+  .provider-directory .provider-grid {
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 10px;
+  }
+
+  .provider-directory .provider-card {
+    min-height: 194px;
+    padding: 15px 9px;
+  }
+
+  .provider-directory .provider-logo {
+    width: 76px;
+    height: 76px;
+  }
+
+  .provider-directory .provider-logo img {
+    width: 64px;
+    height: 64px;
+  }
+
+  .provider-card-title {
+    font-size: 13px;
+  }
+}
