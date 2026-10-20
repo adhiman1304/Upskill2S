@@ -1,0 +1,31 @@
+node_modules/
+**/dist/
+**/build/
+**/coverage/
+**/.vite/
+**/playwright-report/
+**/test-results/
+server/src/generated/prisma/
+
+# Local environment and secrets. Keep the example templates versioned.
+**/.env*
+!**/.env.example
+
+# Local SQLite databases and sidecar files.
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*-journal
+*-wal
+*-shm
+
+# Local uploads, logs, and OS/editor artifacts.
+**/uploads/
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# TypeScript build metadata.
+*.tsbuildinfo
