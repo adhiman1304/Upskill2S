@@ -1,6 +1,6 @@
 # Stand-up notes: Upskill AI rework (branch `ai-rework`)
 
-Built overnight on 2026-10-21. One orchestrating session plus nine Claude Opus 5.5 agents working in parallel waves on disjoint files, from the plan in `docs/AI_REWORK_PLAN.md`.
+Built overnight on 2026-10-21 and 2026-10-22. One orchestrating session plus nine Claude Opus 5.5 agents working in parallel waves on disjoint files, from the plan in `docs/AI_REWORK_PLAN.md`.
 
 ## The pitch in three sentences
 
@@ -15,14 +15,14 @@ The MVP was a manual catalog: people upload PDFs and question sets, vote, and cl
 - **Bring your own key** (`/settings`): each user stores their own OpenAI key, validated on save, AES-256-GCM encrypted at rest, never shown again. Research runs with the requesting user's key.
 - **Operations** (`/admin/ops`): summary tiles, stale briefs, job table with progress logs and cancel, "refresh all stale". A nightly scheduler refreshes stale briefs for followed certifications when a company server key is configured.
 - **Legacy**: library, resources, saved, community board, contributions, leaderboard and review queue still work under "Community".
-- **Design pass**: one type family, one token set, single-column layout, mobile top bar and menu, consolidated CSS. See `docs/handoff/G.md`.
+- **Design pass**: DM Sans only, one token set under `client/src/styles/`, tighter density, single-column page grammar with one primary action per view, desktop sidebar plus a mobile top bar with a menu, accessible checkboxes and votes, per-route page titles. Screenshots at 1280 px and 390 px are in `docs/screenshots/`. Details in `docs/handoff/G.md`.
 
 ## Numbers
 
 | Item | Value |
 |---|---|
-| Commits on the branch | 6 |
-| Files changed vs main | 134 (about 12k lines added) |
+| Commits on the branch | 8 |
+| Files changed vs main | about 150 (about 13k lines added) |
 | New API route modules | 6 (settings, catalog, briefs, jobs, intake, admin-ops) |
 | New services | research, intake, catalog, jobs, openai, ops, scheduler |
 | Catalog exams seeded | 84 across 16 providers |
@@ -63,6 +63,10 @@ npm --prefix server run research -- --code AZ-104 --provider Microsoft --key sk-
 - Resolving a catalog-only exam attributes the row to the user and awards legacy leaderboard points.
 - Intake recommendations named only by title (Google "Professional Cloud Architect") create a new row instead of matching the catalog entry.
 - `KEY_ENCRYPTION_SECRET` must be set before anyone stores a real key outside local dev.
+
+## Branch state
+
+All work is on the local branch `ai-rework` in this worktree, eight commits ahead of `main`, not pushed. Each wave is its own commit so the history reads as the plan. Open a pull request from `ai-rework` to `main` when the team is ready.
 
 ## How to run
 
