@@ -1,0 +1,16 @@
+{
+  "exportedAt": "2026-10-21T22:12:01.737Z",
+  "count": 1,
+  "briefs": [
+    {
+      "file": "briefs/microsoft-dp-700-v1.json",
+      "provider": "Microsoft",
+      "code": "DP-700",
+      "version": 1,
+      "status": "CURRENT",
+      "generatedAt": "2026-10-21T21:46:50.546Z",
+      "model": "fixture",
+      "sourceCount": 22
+    }
+  ]
+}

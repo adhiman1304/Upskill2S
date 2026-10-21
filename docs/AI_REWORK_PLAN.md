@@ -341,4 +341,4 @@ Orchestrator (Claude in this session): commits after each wave, writes `docs/STA
 - Personalized study plan: brief checklist adjusted by the intake profile and target date, with calendar export.
 - Practice question generation from the brief with rights-safe sourcing.
 - Convert legacy resources into "community tips" attached to brief items.
-- Postgres and object storage for multi-instance deployment.
+- Database structure decision: Postgres (or similar) plus object storage for briefs and sources, backups, and a real import/export path. Until then `data/knowledge/` holds temporary JSON exports so gathered knowledge is not lost with the local SQLite file; it is not the final storage design.
