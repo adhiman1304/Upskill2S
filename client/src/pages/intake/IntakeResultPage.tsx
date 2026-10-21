@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw } from 'lucide-react'
 import { usePolling } from '../../hooks/usePolling'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useIsMobile } from '../../hooks/useMediaQuery'
 import { ApiError } from '../../lib/api/client'
-import { getIntake, selectRecommendation } from '../../lib/api/intake'
+import { getIntake, saveHeldCertifications, selectRecommendation } from '../../lib/api/intake'
 import { getJob } from '../../lib/api/jobs'
-import type { IntakeRecommendation, IntakeSessionDto } from '../../lib/contracts'
+import type { HeldCertification, IntakeRecommendation, IntakeSessionDto } from '../../lib/contracts'
 import { useApi } from '../../session'
 import { formatDate, message } from '../legacy/utils'
 import type { IntakePrefillState } from './IntakePage'
@@ -111,6 +111,7 @@ export function IntakeResultPage() {
   }
 
   const result = current.result
+  const held = result.heldCertifications ?? []
   const profile = <section className="intake-profile" aria-labelledby="intake-profile-heading">
     <h2 id="intake-profile-heading" className={mobile ? 'sr-only' : undefined}>Your profile</h2>
     <p className="intake-profile-summary">{result.profileSummary}</p>
@@ -120,6 +121,8 @@ export function IntakeResultPage() {
   return <div className="page-content intake-page">{header}
     {/* Mobile: recommendations first; the profile summary sits behind "What we understood" below them. */}
     {!mobile && profile}
+
+    {held.length > 0 && <HeldCertificationsSection sessionId={current.id} held={held} onSaved={setSession} />}
 
     {selectError && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{selectError}</div>}
 
@@ -164,4 +167,70 @@ export function IntakeResultPage() {
 
     {inputSummary}
   </div>
+}
+
+/** "Certifications you already hold": extracted from the intake text and documents; saving adds them to My certifications as Passed. */
+function HeldCertificationsSection({ sessionId, held, onSaved }: { sessionId: string; held: HeldCertification[]; onSaved: (session: IntakeSessionDto) => void }) {
+  const request = useApi()
+  const [unchecked, setUnchecked] = useState<Set<number>>(new Set())
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const pending = held.map((item, index) => ({ item, index })).filter(({ item }) => !item.saved)
+  const chosen = pending.filter(({ index }) => !unchecked.has(index)).map(({ index }) => index)
+  const savedCount = held.filter((item) => item.saved).length
+  // Done once nothing is left to save, or after a save when the rest were unchecked (checking one again brings the button back).
+  const allSaved = pending.length === 0 || (savedCount > 0 && chosen.length === 0)
+
+  function toggle(index: number) {
+    setUnchecked((current) => {
+      const next = new Set(current)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  async function save() {
+    setSaving(true)
+    setError(null)
+    try {
+      onSaved(await saveHeldCertifications(request, sessionId, chosen))
+    } catch (reason) {
+      setError(message(reason, 'Could not save these certifications.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <section className="section intake-held" aria-labelledby="intake-held-heading">
+    <div className="section-heading"><div><h2 id="intake-held-heading">Certifications you already hold</h2><p>Found in what you told us. Uncheck any that are wrong.</p></div></div>
+    <ul className="list intake-held-list">
+      {held.map((item, index) => {
+        const inputId = `held-${index}`
+        return <li key={`${item.provider}-${item.code}-${index}`}>
+          <label className="intake-held-row" htmlFor={item.saved ? undefined : inputId}>
+            {item.saved
+              ? <span className="intake-held-saved" aria-label="Saved"><Check size={16} aria-hidden="true" /></span>
+              : <input id={inputId} type="checkbox" aria-label={`${item.code} ${item.title}`} checked={!unchecked.has(index)} disabled={saving} onChange={() => toggle(index)} />}
+            <span className="intake-held-text">
+              <strong>{item.code} <span className="intake-held-title">{item.title}</span></strong>
+              <small>{item.provider}{item.yearObtained ? ` · ${item.yearObtained}` : ''}</small>
+              {item.evidence && <q className="intake-held-evidence">{item.evidence}</q>}
+            </span>
+          </label>
+        </li>
+      })}
+    </ul>
+    {error && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</div>}
+    <div className="intake-held-actions">
+      {allSaved
+        ? <p className="intake-held-done" role="status"><Check size={15} aria-hidden="true" />Saved{savedCount > 1 ? ` ${savedCount} certifications` : ''}. <Link to="/my-certifications?tab=passed">View in My certifications</Link></p>
+        : <>
+            {savedCount > 0 && <Link to="/my-certifications?tab=passed">View saved in My certifications</Link>}
+            <button type="button" className="button button-secondary" disabled={saving || chosen.length === 0} onClick={() => void save()}>
+              {saving && <LoaderCircle size={14} className="spin" aria-hidden="true" />}Save to My certifications
+            </button>
+          </>}
+    </div>
+  </section>
 }

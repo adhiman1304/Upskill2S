@@ -11,6 +11,7 @@ export function routeTitle(pathname: string) {
   if (pathname === '/intake') return 'Help me choose'
   if (pathname.startsWith('/intake/')) return 'Recommendations'
   if (pathname.startsWith('/certifications/')) return 'Study brief'
+  if (pathname === '/my-certifications') return 'My certifications'
   if (pathname === '/settings') return 'Settings'
   if (pathname === '/library') return 'Library'
   if (pathname.startsWith('/library/')) return 'Library'

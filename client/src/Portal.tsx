@@ -9,6 +9,7 @@ import { HomePage } from './pages/home/HomePage'
 import { IntakePage } from './pages/intake/IntakePage'
 import { IntakeResultPage } from './pages/intake/IntakeResultPage'
 import { BriefPage } from './pages/brief/BriefPage'
+import { MyCertificationsPage } from './pages/my/MyCertificationsPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
 import { AdminOpsPage } from './pages/admin/AdminOpsPage'
 import { LibraryPage } from './pages/legacy/LibraryPage'
@@ -26,6 +27,7 @@ export default function Portal() {
       <Route path="intake" element={<IntakePage />} />
       <Route path="intake/:id" element={<IntakeResultPage />} />
       <Route path="certifications/:id" element={<BriefPage />} />
+      <Route path="my-certifications" element={<MyCertificationsPage />} />
       <Route path="settings" element={<SettingsPage />} />
       <Route path="library" element={<LibraryPage />} />
       <Route path="library/:id" element={<CertificationDetailPage />} />

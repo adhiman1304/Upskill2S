@@ -7,6 +7,7 @@ const providers = [
   { name: 'Salesforce', domain: 'salesforce.com' },
   { name: 'Databricks', domain: 'databricks.com' },
   { name: 'Snowflake', domain: 'snowflake.com' },
+  { name: 'Anthropic', domain: 'anthropic.com', detail: 'Claude' },
 ]
 
 export function ProviderBrowse({ onPick }: { onPick: (provider: string) => void }) {

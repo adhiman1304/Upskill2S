@@ -6,12 +6,12 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useIsMobile } from '../../hooks/useMediaQuery'
 import { useTabParam } from '../../hooks/useTabParam'
 import { CertificationSearch } from './CertificationSearch'
-import { ContinueCard, MyCertifications } from './MyCertifications'
+import { ContinueCard } from './ContinueCard'
 import { ProviderBrowse } from './ProviderBrowse'
-import { useMyCertifications } from './useMyCertifications'
+import { useContinueCertification } from './useContinueCertification'
 import './home.css'
 
-const tabIds = ['search', 'mine', 'providers'] as const
+const tabIds = ['search', 'providers'] as const
 
 function HowItWorks() {
   return <>
@@ -29,7 +29,7 @@ export function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
   const mobile = useIsMobile()
-  const mine = useMyCertifications()
+  const continueState = useContinueCertification()
   const [query, setQuery] = useState('')
   const [activeTab, selectTab] = useTabParam(tabIds)
   const inputRef = useRef<HTMLInputElement | null>(null)
@@ -43,11 +43,10 @@ export function HomePage() {
     inputRef.current?.focus({ preventScroll: true })
   }, [activeTab])
 
-  // "My certifications" links: /#mine scrolls on desktop; /?tab=mine opens the tab on mobile. Each width accepts the other form.
+  // Old "My certifications" links (/#mine, /?tab=mine) now go to their own page.
   useEffect(() => {
-    if (mobile && location.hash === '#mine') navigate('/?tab=mine', { replace: true })
-    else if (!mobile && (location.hash === '#mine' || activeTab === 'mine')) document.getElementById('mine')?.scrollIntoView()
-  }, [activeTab, location.hash, mobile, navigate])
+    if (location.hash === '#mine' || new URLSearchParams(location.search).get('tab') === 'mine') navigate('/my-certifications', { replace: true })
+  }, [location.hash, location.search, navigate])
 
   function pickProvider(provider: string) {
     setQuery(provider)
@@ -70,13 +69,12 @@ export function HomePage() {
       { id: 'search', label: 'Search', content: <section className="home-hero" ref={heroRef} aria-labelledby="home-question">
         {search}
         {chooseLink}
-        <ContinueCard state={mine} />
+        <ContinueCard state={continueState} />
         <details className="disclosure home-next">
           <summary>What happens next</summary>
           <HowItWorks />
         </details>
       </section> },
-      { id: 'mine', label: 'Mine', content: <MyCertifications state={mine} /> },
       { id: 'providers', label: 'Providers', content: <ProviderBrowse onPick={pickProvider} /> },
     ]} />
   </div>
@@ -87,9 +85,8 @@ export function HomePage() {
       <p className="page-desc">Search by exam code, name or provider. We research the official exam page, learning path and community advice into a cited study checklist.</p>
       {search}
       {chooseLink}
+      <ContinueCard state={continueState} />
     </section>
-
-    <MyCertifications state={mine} />
 
     <ProviderBrowse onPick={pickProvider} />
 

@@ -6,12 +6,13 @@ import { z } from 'zod'
 import type { IntakeSession } from '../generated/prisma/client.js'
 import { config } from '../config.js'
 import { prisma } from '../database.js'
-import { intakeAttachmentSchema, intakeResultSchema, intakeStatusSchema, type IntakeAttachment, type IntakeSessionDto } from '../lib/contracts/index.js'
+import { intakeAttachmentSchema, intakeResultSchema, intakeStatusSchema, saveHeldRequestSchema, type IntakeAttachment, type IntakeSessionDto } from '../lib/contracts/index.js'
 import { currentUser, isAdmin } from '../lib/permissions.js'
 import { requireAuth } from '../middleware/requireAuth.js'
 import { CatalogInputError, resolveCertification } from '../services/catalog/index.js'
 import { combineExtractedText, extractText, IntakeFileError, isSupportedIntakeFileName, type ExtractedFile } from '../services/intake/extract.js'
 import { enqueueJob } from '../services/jobs/queue.js'
+import { MyCertificationInputError, saveMyCertifications } from '../services/my-certifications/index.js'
 
 export const intakeRouter = Router()
 
@@ -157,4 +158,36 @@ intakeRouter.post('/intake/:id/select', requireAuth, async (request, response) =
     }
     throw error
   }
+})
+
+// POST /intake/:id/held { indexes } -> IntakeSessionDto. Workstream M: saves the selected "Certifications you already hold"
+// as PASSED in My certifications (catalog rows are created as the system user) and marks them saved in the stored result.
+intakeRouter.post('/intake/:id/held', requireAuth, async (request, response) => {
+  const parsed = saveHeldRequestSchema.safeParse(request.body)
+  if (!parsed.success) { response.status(400).json({ error: 'Choose at least one certification to save.', code: 'INVALID_REQUEST' }); return }
+  const loaded = await loadOwnedSession(request, response)
+  if (!loaded) return
+  // Saving goes to the session owner's list, even when an admin opens someone else's intake.
+  if (loaded.session.userId !== loaded.user.id) { response.status(404).json({ error: 'Intake session not found.' }); return }
+  const result = parseResult(loaded.session.result)
+  const indexes = [...new Set(parsed.data.indexes)]
+  const held = result?.heldCertifications ?? []
+  if (loaded.session.status !== 'SUCCEEDED' || !result || indexes.some((index) => !held[index])) { response.status(404).json({ error: 'Held certification not found.' }); return }
+  let ids: string[]
+  try {
+    ids = await saveMyCertifications(loaded.user.id, indexes.map((index) => {
+      const item = held[index]!
+      return { provider: item.provider, code: item.catalogMatch?.code ?? item.code, title: item.title, officialUrl: null, status: 'PASSED' as const }
+    }))
+  } catch (error) {
+    if (error instanceof MyCertificationInputError) { response.status(422).json({ error: `This certification could not be saved (${error.message}). Add it on My certifications instead.`, code: 'INVALID_REQUEST' }); return }
+    throw error
+  }
+  indexes.forEach((index, position) => {
+    const item = held[index]!
+    held[index] = { ...item, saved: true, catalogMatch: { certificationId: ids[position]!, code: item.catalogMatch?.code ?? item.code } }
+  })
+  const updated = await prisma.intakeSession.update({ where: { id: loaded.session.id }, data: { result: JSON.stringify({ ...result, heldCertifications: held }) } })
+  const jobIds = await latestJobIds([updated.id])
+  response.json(intakeSessionDto(updated, jobIds.get(updated.id) ?? null))
 })

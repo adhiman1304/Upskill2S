@@ -20,3 +20,8 @@ export function listMyIntakes(request: AuthenticatedRequest) {
 export function selectRecommendation(request: AuthenticatedRequest, id: string, recommendationIndex: number) {
   return request<{ certificationId: string }>(`/api/intake/${encodeURIComponent(id)}/select`, { method: 'POST', body: JSON.stringify({ recommendationIndex }) })
 }
+
+/** POST /api/intake/:id/held: saves the chosen held certifications as Passed; returns the session with them marked `saved`. */
+export function saveHeldCertifications(request: AuthenticatedRequest, id: string, indexes: number[]) {
+  return request<IntakeSessionDto>(`/api/intake/${encodeURIComponent(id)}/held`, { method: 'POST', body: JSON.stringify({ indexes }) })
+}

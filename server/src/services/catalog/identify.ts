@@ -65,7 +65,7 @@ function refusalOf(response: OpenAI.Responses.Response): string | null {
 
 // --- post-processing ----------------------------------------------------------------------------
 
-function clip(value: string, max: number) {
+export function clip(value: string, max: number) {
   const trimmed = value.replace(/\s+/g, ' ').trim()
   return trimmed.length > max ? `${trimmed.slice(0, max - 1).trimEnd()}…` : trimmed
 }
@@ -80,13 +80,13 @@ export function toCertificationCode(rawCode: string, title: string): string | nu
 }
 
 /** Provider name as the catalog spells it ("Amazon Web Services" -> "AWS"), else the model's text. */
-function displayProvider(provider: string) {
+export function displayProvider(provider: string) {
   const key = canonicalProviderKey(provider)
   return listCatalogEntries().find((entry) => canonicalProviderKey(entry.provider) === key)?.provider ?? clip(provider, 80)
 }
 
 /** Catalog entry by provider + code (or code-like alias), else by provider + title/alias. */
-function matchCatalogEntry(provider: string, code: string, title: string) {
+export function matchCatalogEntry(provider: string, code: string, title: string) {
   const byCode = findCatalogEntry(provider, code)
   if (byCode) return byCode
   const providerKey = canonicalProviderKey(provider)
@@ -96,7 +96,7 @@ function matchCatalogEntry(provider: string, code: string, title: string) {
     && [entry.title, ...entry.aliases].some((name) => compact(name) === titleCompact)) ?? null
 }
 
-async function findDbCertification(providers: string[], codes: string[]) {
+export async function findDbCertification(providers: string[], codes: string[]) {
   const providerKeys = [...new Set(providers.flatMap((provider) => [normalizeKey(provider), canonicalProviderKey(provider)]))]
   const codeKeys = [...new Set(codes.map(normalizeKey))]
   return prisma.certification.findFirst({

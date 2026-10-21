@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CircleAlert, Clock, FileText, LoaderCircle, Mic, MicOff, Paperclip, Sparkles, X } from 'lucide-react'
+import { ArrowRight, CircleAlert, Clock, FileText, LoaderCircle, Mic, MicOff, Paperclip, Sparkles, X } from 'lucide-react'
 import { KeyRequiredCallout } from '../../components/ui/KeyRequiredCallout'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
-import { useIsMobile } from '../../hooks/useMediaQuery'
 import { useSpeechDictation } from '../../hooks/useSpeechDictation'
 import { ApiError } from '../../lib/api/client'
 import { createIntake, listMyIntakes } from '../../lib/api/intake'
@@ -17,12 +16,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024
 const ACCEPTED_EXTENSIONS = ['.pdf', '.docx', '.txt', '.md']
 const MAX_TEXT_CHARS = 20_000
 
-const examples = [
-  "I'm a cloud engineer on the bench. I have AZ-104 and want to move toward data engineering within six months.",
-  "I'm a junior developer (2 years of TypeScript and Node.js) and want my first cloud certification. Our company uses AWS.",
-  "I'm a network administrator moving into security. I know Cisco routing and switching and have about 5 hours a week to study.",
-  "I'm a project manager in an IT consultancy and want a certification that clients recognize, ideally covering agile delivery.",
-]
+const EXAMPLE = 'Cloud engineer with AZ-104, moving toward data engineering'
 
 export interface IntakePrefillState { prefillText?: string; followUpQuestions?: string[] }
 
@@ -36,9 +30,6 @@ function extensionOf(name: string) {
   const dot = name.lastIndexOf('.')
   return dot >= 0 ? name.slice(dot).toLocaleLowerCase() : ''
 }
-
-type Step = 1 | 2 | 3
-const steps = ['Tell us about you', 'Add documents (optional)', 'Review and send']
 
 const statusLabels: Record<IntakeSessionDto['status'], string> = { QUEUED: 'Queued', RUNNING: 'Running', SUCCEEDED: 'Ready', FAILED: 'Failed' }
 
@@ -54,13 +45,11 @@ export function IntakePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [keyMissing, setKeyMissing] = useState(false)
-  const [dragging, setDragging] = useState(false)
   const [history, setHistory] = useState<IntakeSessionDto[] | null>(null)
   const [historyError, setHistoryError] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+  const textArea = useRef<HTMLTextAreaElement>(null)
   const followUps = prefill?.followUpQuestions ?? []
-  const mobile = useIsMobile()
-  const [step, setStep] = useState<Step>(1)
 
   const dictation = useSpeechDictation((transcript) => {
     setText((current) => (current && !/\s$/.test(current) ? `${current} ${transcript}` : `${current}${transcript}`))
@@ -93,12 +82,6 @@ export function IntakePage() {
     setFileError(problems.length ? problems.join(' ') : null)
   }
 
-  function onDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault()
-    setDragging(false)
-    if (event.dataTransfer.files.length) addFiles(event.dataTransfer.files)
-  }
-
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (submitting) return
@@ -119,167 +102,82 @@ export function IntakePage() {
 
   const canSubmit = (text.trim().length > 0 || files.length > 0) && !submitting
 
-  const header = <header className="page-header"><div><h1>Help me choose a certification</h1><p className="page-desc">Tell us where you are and where you want to go. Type, dictate, or attach a resume, project description or job offer, and we will suggest certifications that fit.</p></div></header>
-
-  const keyCallout = keyMissing && <KeyRequiredCallout className="intake-callout">Recommendations run with your own OpenAI key. Add it in Settings, then submit again. Your text and files are still here.</KeyRequiredCallout>
-
-  const followUpHint = followUps.length > 0 && <div className="alert intake-followups-hint">
-    <strong>Answer these to refine your results</strong>
-    <ul>{followUps.map((question) => <li key={question}>{question}</li>)}</ul>
-  </div>
-
-  const textBlock = <>
-    <label className="intake-text-field">
-      <span className="sr-only">Your background and goals</span>
-      <textarea
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-        maxLength={MAX_TEXT_CHARS}
-        rows={8}
-        placeholder="I'm a cloud engineer on the bench, I have AZ-104 and want to move toward data engineering... Mention your current role, experience, certifications you hold, where you want to go, and how much time you have."
-      />
-      {dictation.listening && dictation.interimText && <span className="intake-interim" aria-live="polite">{dictation.interimText}</span>}
-    </label>
-
-    <div className="intake-toolbar">
-      {dictation.supported
-        ? <button type="button" className={`button ${dictation.listening ? 'button-primary intake-mic-live' : 'button-secondary'}`} onClick={dictation.listening ? dictation.stop : dictation.start} aria-pressed={dictation.listening}>
-            {dictation.listening ? <MicOff size={15} aria-hidden="true" /> : <Mic size={15} aria-hidden="true" />}
-            {dictation.listening ? 'Stop dictation' : 'Dictate'}
-          </button>
-        : <span className="intake-note"><MicOff size={14} aria-hidden="true" />Voice dictation is not supported in this browser.</span>}
-      {dictation.listening && <span className="intake-listening" role="status"><span className="intake-pulse" aria-hidden="true" />Listening...</span>}
-      <span className="intake-count">{text.length.toLocaleString()} / {MAX_TEXT_CHARS.toLocaleString()}</span>
-    </div>
-    {dictation.error && <p className="intake-inline-error" role="alert">{dictation.error}</p>}
-
-    <div className="intake-examples" aria-label="Example prompts">
-      <span className="eyebrow">Try an example</span>
-      <div>{examples.map((example) => <button type="button" key={example} className="intake-chip" onClick={() => setText(example)} title={example}>{example.length > 64 ? `${example.slice(0, 62)}...` : example}</button>)}</div>
-    </div>
-  </>
-
-  const filesBlock = <>
-    <div
-      className={`intake-drop${dragging ? ' dragging' : ''}`}
-      onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={onDrop}
-    >
-      <Paperclip size={18} aria-hidden="true" />
-      <div>
-        <strong>Drop files here or <button type="button" className="intake-link-button" onClick={() => fileInput.current?.click()}>browse</button></strong>
-        <small>Resume, project description or job offer. Up to {MAX_FILES} PDF, DOCX or TXT files, {formatBytes(MAX_FILE_BYTES)} each.</small>
-      </div>
-      <input ref={fileInput} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(',')} hidden onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = '' }} />
-    </div>
-    {fileError && <p className="intake-inline-error" role="alert">{fileError}</p>}
-    {files.length > 0 && <ul className="intake-files">
-      {files.map((file) => <li key={`${file.name}-${file.size}`}>
-        <FileText size={15} aria-hidden="true" />
-        <span className="intake-file-name">{file.name}</span>
-        <small>{formatBytes(file.size)}</small>
-        <button type="button" className="icon-button" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((item) => item !== file))}><X size={14} /></button>
-      </li>)}
-    </ul>}
-  </>
-
-  const errorBlock = error && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</div>
-  const submitButton = <button type="submit" className="button button-primary" disabled={!canSubmit}>
-    {submitting ? <LoaderCircle size={15} className="spin" aria-hidden="true" /> : <Sparkles size={15} aria-hidden="true" />}
-    {submitting ? 'Starting...' : 'Recommend certifications'}
-  </button>
-  const privacy = <p className="intake-privacy">Your input is sent to OpenAI with your key. Avoid personal details you would not put on a resume.</p>
-
-  const historyList = <>
-    {historyError && <div className="alert error"><CircleAlert size={15} aria-hidden="true" />{historyError}</div>}
-    {!history && !historyError && <p className="muted">Loading...</p>}
-    {history?.length === 0 && <p className="muted">No previous intakes yet.</p>}
-    {history && history.length > 0 && <ul className="list intake-history-list">
-      {history.map((item) => <li key={item.id}>
-        <Link to={`/intake/${item.id}`}>
-          <span className="intake-history-text">{item.inputText || item.attachments.map((file) => file.name).join(', ') || 'Untitled intake'}</span>
-          <span className="intake-history-meta">
-            <span className={`chip intake-status-${item.status.toLowerCase()}`}>{statusLabels[item.status]}</span>
-            {item.result && <small>{item.result.recommendations.length} recommendations</small>}
-            <small><Clock size={11} aria-hidden="true" /> {formatDate(item.createdAt)}</small>
-            <ArrowRight size={14} aria-hidden="true" />
-          </span>
-        </Link>
-      </li>)}
-    </ul>}
-  </>
-
-  if (mobile) {
-    const goTo = (next: Step) => { if (dictation.listening) dictation.stop(); setStep(next); window.scrollTo({ top: 0 }) }
-    const current = steps[step - 1]
-    return <div className="page-content intake-page">
-      <header className="page-header"><div><h1>Help me choose a certification</h1></div></header>
-      <ol className="intake-stepper" aria-label={`Step ${step} of ${steps.length}`}>
-        {steps.map((label, index) => <li key={label} className={index + 1 === step ? 'is-current' : index + 1 < step ? 'is-done' : ''} aria-current={index + 1 === step ? 'step' : undefined}><span className="sr-only">Step {index + 1}: {label}</span></li>)}
-      </ol>
-      <p className="intake-step-title"><span>Step {step} of {steps.length}</span> {current}</p>
-      {keyCallout}
-      <form className="intake-form" onSubmit={(event) => void submit(event)}>
-        {step === 1 && <>
-          {followUpHint}
-          {textBlock}
-          <div className="intake-step-actions"><button type="button" className="button button-primary" onClick={() => goTo(2)}>Next <ArrowRight size={15} aria-hidden="true" /></button></div>
-        </>}
-        {step === 2 && <>
-          <p className="muted intake-step-desc">Optional. A resume, project description or job offer helps us match your experience.</p>
-          {filesBlock}
-          <div className="intake-step-actions">
-            <button type="button" className="button button-secondary" onClick={() => goTo(1)}><ArrowLeft size={15} aria-hidden="true" /> Back</button>
-            <button type="button" className="button button-primary" onClick={() => goTo(3)}>{files.length ? 'Next' : 'Skip'} <ArrowRight size={15} aria-hidden="true" /></button>
-          </div>
-        </>}
-        {step === 3 && <>
-          <dl className="intake-review">
-            <div>
-              <dt>About you <button type="button" className="text-button" onClick={() => goTo(1)}>Edit</button></dt>
-              <dd>{text.trim() ? <span className="intake-review-text">{text.trim()}</span> : <span className="muted">Nothing written yet.</span>}</dd>
-            </div>
-            <div>
-              <dt>Documents <button type="button" className="text-button" onClick={() => goTo(2)}>Edit</button></dt>
-              <dd>{files.length ? files.map((file) => file.name).join(', ') : <span className="muted">None attached.</span>}</dd>
-            </div>
-          </dl>
-          {!text.trim() && !files.length && <p className="intake-inline-error">Describe your background and goals, or attach a file.</p>}
-          {errorBlock}
-          {privacy}
-          <div className="intake-step-actions">
-            <button type="button" className="button button-secondary" onClick={() => goTo(2)}><ArrowLeft size={15} aria-hidden="true" /> Back</button>
-            {submitButton}
-          </div>
-        </>}
-      </form>
-      <details className="disclosure intake-history-toggle">
-        <summary>Previous intakes</summary>
-        {historyList}
-      </details>
-    </div>
-  }
-
   return <div className="page-content intake-page">
-    {header}
-    {keyCallout}
-    {followUpHint}
+    <header className="page-header"><div><h1 id="intake-question">Tell us where you are and where you want to go</h1></div></header>
+
+    {keyMissing && <KeyRequiredCallout className="intake-callout">Recommendations run with your own OpenAI key. Add it in Settings, then submit again. Your text and files are still here.</KeyRequiredCallout>}
+    {followUps.length > 0 && <div className="alert intake-followups-hint">
+      <strong>Answer these to refine your results</strong>
+      <ul>{followUps.map((question) => <li key={question}>{question}</li>)}</ul>
+    </div>}
 
     <form className="intake-form" onSubmit={(event) => void submit(event)}>
-      {textBlock}
-      {filesBlock}
-      {errorBlock}
-
-      <div className="intake-submit">
-        {privacy}
-        {submitButton}
+      <div className="intake-text-field">
+        <textarea
+          ref={textArea}
+          aria-labelledby="intake-question"
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          maxLength={MAX_TEXT_CHARS}
+          rows={7}
+          placeholder="Your current role and experience, certifications you hold, where you want to go, and how much time you have."
+        />
+        {dictation.supported && <button
+          type="button"
+          className={`intake-mic${dictation.listening ? ' is-live' : ''}`}
+          onClick={dictation.listening ? dictation.stop : dictation.start}
+          aria-pressed={dictation.listening}
+          aria-label={dictation.listening ? 'Stop dictation' : 'Dictate'}
+          title={dictation.listening ? 'Stop dictation' : 'Dictate'}
+        >{dictation.listening ? <MicOff size={16} aria-hidden="true" /> : <Mic size={16} aria-hidden="true" />}</button>}
       </div>
+      {dictation.listening && <p className="intake-listening" role="status"><span className="intake-pulse" aria-hidden="true" />Listening...{dictation.interimText && <span className="intake-interim"> {dictation.interimText}</span>}</p>}
+      {dictation.error && <p className="intake-inline-error" role="alert">{dictation.error}</p>}
+
+      <button type="button" className="intake-try" onClick={() => { setText(EXAMPLE); textArea.current?.focus() }}>Try: <span>'{EXAMPLE}'</span></button>
+
+      {files.length > 0 && <ul className="intake-files" aria-label="Attached files">
+        {files.map((file) => <li key={`${file.name}-${file.size}`}>
+          <FileText size={15} aria-hidden="true" />
+          <span className="intake-file-name">{file.name}</span>
+          <small>{formatBytes(file.size)}</small>
+          <button type="button" className="icon-button" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((item) => item !== file))}><X size={14} /></button>
+        </li>)}
+      </ul>}
+      {fileError && <p className="intake-inline-error" role="alert">{fileError}</p>}
+      {error && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</div>}
+
+      <div className="intake-actions-row">
+        <button type="button" className="button button-secondary" onClick={() => fileInput.current?.click()} disabled={files.length >= MAX_FILES}>
+          <Paperclip size={15} aria-hidden="true" />Attach resume or project brief
+        </button>
+        <input ref={fileInput} type="file" multiple accept={ACCEPTED_EXTENSIONS.join(',')} hidden onChange={(event) => { if (event.target.files) addFiles(event.target.files); event.target.value = '' }} />
+        <button type="submit" className="button button-primary" disabled={!canSubmit}>
+          {submitting ? <LoaderCircle size={15} className="spin" aria-hidden="true" /> : <Sparkles size={15} aria-hidden="true" />}
+          {submitting ? 'Starting...' : 'Get recommendations'}
+        </button>
+      </div>
+      <p className="intake-privacy">Sent to OpenAI with your key. Up to {MAX_FILES} PDF, DOCX, TXT or Markdown files, {MAX_FILE_BYTES / 1024 / 1024} MB each.</p>
     </form>
 
-    <section className="section intake-history" aria-labelledby="intake-history-heading">
-      <div className="section-heading"><div><h2 id="intake-history-heading">Previous intakes</h2><p>Your last 10 recommendation requests.</p></div></div>
-      {historyList}
-    </section>
+    <details className="disclosure intake-history-toggle">
+      <summary>Previous intakes</summary>
+      {historyError && <div className="alert error"><CircleAlert size={15} aria-hidden="true" />{historyError}</div>}
+      {!history && !historyError && <p className="muted">Loading...</p>}
+      {history?.length === 0 && <p className="muted">No previous intakes yet.</p>}
+      {history && history.length > 0 && <ul className="list intake-history-list">
+        {history.map((item) => <li key={item.id}>
+          <Link to={`/intake/${item.id}`}>
+            <span className="intake-history-text">{item.inputText || item.attachments.map((file) => file.name).join(', ') || 'Untitled intake'}</span>
+            <span className="intake-history-meta">
+              <span className={`chip intake-status-${item.status.toLowerCase()}`}>{statusLabels[item.status]}</span>
+              {item.result && <small>{item.result.recommendations.length} recommendations</small>}
+              <small><Clock size={11} aria-hidden="true" /> {formatDate(item.createdAt)}</small>
+              <ArrowRight size={14} aria-hidden="true" />
+            </span>
+          </Link>
+        </li>)}
+      </ul>}
+    </details>
   </div>
 }

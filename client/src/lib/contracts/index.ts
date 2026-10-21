@@ -2,6 +2,7 @@
 export type * from './brief'
 export type * from './jobs'
 export type * from './intake'
+export type * from './my-certifications'
 export type * from './settings'
 export type * from './catalog'
 

@@ -254,8 +254,33 @@ export function findCatalogEntry(provider: string, code: string): CatalogSeedEnt
     ?? null
 }
 
+// The seed's system user ("Upskill"). Catalog rows created on someone's behalf without their authorship use it.
+const SYSTEM_USER = { tenantId: 'system', objectId: 'system', displayName: 'Upskill' } as const
+let systemUserIdCache: string | null = null
+
+/** Id of the system user, created on first use if the seed has not run. */
+export async function systemUserId(): Promise<string> {
+  if (systemUserIdCache) return systemUserIdCache
+  const user = await prisma.user.upsert({
+    where: { tenantId_objectId: { tenantId: SYSTEM_USER.tenantId, objectId: SYSTEM_USER.objectId } },
+    create: SYSTEM_USER,
+    update: {},
+    select: { id: true },
+  })
+  systemUserIdCache = user.id
+  return user.id
+}
+
+export interface FindOrCreateOptions {
+  /**
+   * When the input matches a seed catalog entry and no row exists yet, create it as the system user instead of `userId`,
+   * so saving a held certification does not count as a contribution (leaderboard points). Non-catalog rows still use `userId`.
+   */
+  catalogAsSystem?: boolean
+}
+
 /** Find-or-create by normalized provider + code. Reports whether a row was created. */
-export async function findOrCreateCertification(input: ResolveCertificationInput, userId: string): Promise<{ id: string; created: boolean }> {
+export async function findOrCreateCertification(input: ResolveCertificationInput, userId: string, options: FindOrCreateOptions = {}): Promise<{ id: string; created: boolean }> {
   const entry = findCatalogEntry(input.provider, input.code)
   const provider = entry?.provider ?? input.provider.trim()
   const code = (entry?.code ?? input.code.trim()).toUpperCase()
@@ -284,7 +309,7 @@ export async function findOrCreateCertification(input: ResolveCertificationInput
         officialUrl: httpsOrNull(input.officialUrl) ?? entry?.officialUrl ?? null,
         aliases: JSON.stringify(entry?.aliases ?? []),
         isCatalog: Boolean(entry),
-        createdById: userId,
+        createdById: entry && options.catalogAsSystem ? await systemUserId() : userId,
       },
       select: { id: true },
     })

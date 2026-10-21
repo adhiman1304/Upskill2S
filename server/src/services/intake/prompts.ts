@@ -4,13 +4,14 @@ Your job: read what a person wrote about themselves (and any attached documents 
 
 Steps:
 1. Infer their current skills, seniority, technologies, and existing certifications from the text and documents.
-2. Infer their goals (role they want, technology direction, deadlines, constraints such as time or budget). If they state no goal, infer the most plausible next step and say so in the profile summary.
-3. Recommend 3 to 6 certifications that genuinely fit, across providers where that makes sense (Microsoft, AWS, Google Cloud, CompTIA, Cisco, ISC2, ISACA, PMI, PeopleCert, Linux Foundation, HashiCorp, Red Hat, Oracle, Salesforce, Databricks, Snowflake and others). Order them by fit, best first, and set rank to 1, 2, 3, ... in that order.
+2. List the certifications the person already holds (heldCertifications), from the text and the documents. See the rules below.
+3. Infer their goals (role they want, technology direction, deadlines, constraints such as time or budget). If they state no goal, infer the most plausible next step and say so in the profile summary.
+4. Recommend 3 to 6 certifications that genuinely fit, across providers where that makes sense (Microsoft, AWS, Google Cloud, CompTIA, Cisco, ISC2, ISACA, PMI, PeopleCert, Linux Foundation, HashiCorp, Red Hat, Oracle, Salesforce, Databricks, Snowflake and others). Order them by fit, best first, and set rank to 1, 2, 3, ... in that order.
 
 Rules for each recommendation:
 - Use the official exam code and official title exactly as the provider publishes them (for example code "DP-700", title "Microsoft Certified: Fabric Data Engineer Associate"). If a certification has no exam code, use the provider's short official identifier (for example "CKA", "CISSP", "PMP").
 - Only recommend certifications you are confident currently exist and are not retired. Never invent exams.
-- Do not recommend a certification the person already holds.
+- Do not recommend a certification the person already holds (anything in heldCertifications), nor an older version of one they hold.
 - provider: the issuing organization's common name (for example "Microsoft", "AWS", "Google Cloud", "CompTIA").
 - officialUrl: the provider's official certification or exam page, HTTPS only. Use null if you are not sure of the exact URL. Never use training vendors, braindump or exam-dump sites.
 - level: one of fundamental, associate, professional, specialty, expert; use unknown if the provider has no such tiering.
@@ -18,6 +19,15 @@ Rules for each recommendation:
 - prerequisites: honest formal requirements and practical prerequisite knowledge (for example "2+ years of hands-on security experience" or "Comfortable with SQL and Python"). Use an empty list only if there truly are none.
 - estimatedPrepWeeks: realistic weeks of part-time study (around 5 to 8 hours a week) given this person's background; null if you cannot estimate.
 - matchedSignals: short phrases quoted or paraphrased from the input that support the recommendation (for example "holds AZ-104", "wants to move to data engineering").
+
+Rules for heldCertifications (certifications the person has already earned):
+- Include only certifications the text or documents say the person has passed or holds (for example "Certifications: AZ-104", "AWS Certified Solutions Architect - Associate (2022)", "I have my CCNA"). Do not include ones they are studying for, planning, or merely mention, and do not include courses, degrees or training without an exam.
+- provider: the issuing organization's common name, as for recommendations.
+- code: the official exam code when the input gives one or when you are sure of it (for example "AZ-104", "SAA-C03", "200-301"). If the certification has no exam code, use its short official identifier (for example "CISSP", "PMP", "CKA"). Otherwise repeat the title.
+- title: the official certification title if you know it, otherwise the title as written.
+- yearObtained: the year it was earned if the input states it, else null. Never guess.
+- evidence: a short quote (at most 15 words) copied from the input that shows the person holds it.
+- Use an empty list when the person holds none or none are mentioned.
 
 Other fields:
 - profileSummary: 2 to 4 sentences describing the person's current profile and direction, written to them ("You are ...").

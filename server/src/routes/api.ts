@@ -15,6 +15,7 @@ import { briefsRouter } from './briefs.js'
 import { catalogRouter } from './catalog.js'
 import { intakeRouter } from './intake.js'
 import { jobsRouter } from './jobs.js'
+import { myCertificationsRouter } from './my-certifications.js'
 import { settingsRouter } from './settings.js'
 
 const router = Router()
@@ -70,6 +71,7 @@ router.use('/admin/ops', adminOpsRouter)
 router.use(briefsRouter) // /certifications/:id/brief..., /certifications/:id/follow, /briefs/:briefId/feedback
 router.use(jobsRouter) // /jobs/..., /me/jobs
 router.use(intakeRouter) // /intake/..., /me/intake
+router.use(myCertificationsRouter) // /me/certifications...
 
 function resourceDto(resource: ResourceWithDetails) {
   return {

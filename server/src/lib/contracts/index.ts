@@ -2,6 +2,7 @@ export * from './brief.js'
 export * from './catalog.js'
 export * from './intake.js'
 export * from './jobs.js'
+export * from './my-certifications.js'
 export * from './settings.js'
 
 /** Error body convention for new routes (plan section 5.3). */
