@@ -2,28 +2,60 @@
 
 ## Project Map
 
-- Read [README.md](README.md) for setup, environment variables, local authentication, and resource-sharing rules.
-- The running UI starts at `client/src/main.tsx` and is implemented in `client/src/Portal.tsx`. `client/src/App.tsx` is leftover Vite starter code; do not use it as the application entry point.
-- The React client calls the Express API. Keep shared request/response changes aligned between `client/src/lib/api.ts` and `server/src/routes/api.ts`.
-- API startup, middleware, and error handling are in `server/src/index.ts`. Authentication is in `server/src/middleware/requireAuth.ts`; ownership and admin policy is in `server/src/lib/permissions.ts`; request validation and sanitization is in `server/src/lib/validation.ts`.
+- Read [README.md](README.md) for the product, setup, environment variables, seeding, the BYO OpenAI key flow, the research CLI and the scheduler. `docs/AI_REWORK_PLAN.md` explains the design, `docs/handoff/*.md` record what each workstream built and verified, and `docs/TODO.md` lists the agreed next steps.
+- The per-workstream file ownership in the plan no longer applies: any file may be edited, but keep changes focused.
+
+### Client (`client/src/`)
+
+- Entry: `main.tsx` renders `Portal.tsx`, the router shell (`BrowserRouter` > `SessionProvider` > `AppShell` with nested routes). There is no `App.tsx`.
+- `session.tsx`: Entra / local-bypass session, `useSession()`, and `useApi()`, which returns the authenticated `request` function. Pass that `request` as the first argument to every API function; never call `apiRequest` directly from a page (it sends no token).
+- `lib/api/client.ts`: `apiRequest`, `ApiError` (`status`, `code?: ApiErrorCode`). Feature modules: `lib/api/{briefs,jobs,intake,catalog,settings,adminOps,myCertifications}.ts`; `lib/api/legacy.ts` holds the community-library calls (`lib/api.ts` re-exports both for older imports).
+- `lib/contracts/*.ts`: type-only mirrors of the server contracts (`brief`, `jobs`, `intake`, `catalog`, `settings`, `my-certifications`, plus `ApiErrorCode` in `index.ts`).
+- `hooks/usePolling.ts` (non-overlapping polling; store results in page state from `data`, not from inside the fetcher), `hooks/useSpeechDictation.ts`.
+- `components/layout/`: `AppShell`, `Sidebar` (three primary items, then Community, Admin, Settings), `ApiKeyBanner`, login and setup screens, `Brand` (composed from `components/brand/`: `LogoMark`, `Wordmark`; the mark geometry lives in `geometry.ts`, and `/?brand=1` shows a DEV-only gallery).
+- `components/ui/`: `Tabs` (segmented tabs synced to `?tab=`, optional icons, `tabs` or `stacked` mode), `Select`, `DateField`, `usePopover`, `KeyRequiredCallout`. Use these instead of native selects and date inputs.
+- `styles/`: `tokens.css` (the only place for colors, spacing, radius, type scale), `base.css` (shared components), `layout.css` (shell, sidebar, mobile top bar and menu). Pages keep a slim css file for what is unique to them. DM Sans only.
+- Pages: `pages/home` (`/`, search plus the agent identify row), `pages/intake` (`/intake`, `/intake/:id`), `pages/brief` (`/certifications/:id`, tabs Summary / Exam / Checklist / Gaps / Resources; `?fixture=1` shows a DEV-only sample), `pages/my` (`/my-certifications`, tabs Studying / Planning / Passed), `pages/settings` (`/settings`), `pages/community` (`/community` hub with tabs over the legacy pages), `pages/admin` (`/admin` hub: Operations, Review queue), `pages/legacy` (the embedded community pages and `/library/:id`). Old routes (`/library`, `/saved`, `/contributions`, `/leaderboard`, `/admin/ops`, `/admin/reports`) redirect to the hub tabs.
+- Below 900 px every page is one mission per screen: the sidebar becomes a top bar with a menu, and pages use tabs rather than long scrolls. Verify changes at 390 px and 1280 px.
+
+### Server (`server/src/`)
+
+- `index.ts`: middleware, error handler, startup (`registerHandlers`, `recoverInterruptedJobs`, `recoverInterruptedIntakeSessions`, `startJobWorker`, `startScheduler`) and SIGINT/SIGTERM shutdown (`stopScheduler`, `stopJobWorker`). `config.ts` reads every environment variable.
+- `routes/api.ts` mounts the feature routers after `requireAuth` and holds the legacy community-library routes. Feature routers: `routes/settings.ts` (`/settings/openai-key`), `routes/catalog.ts` (`/catalog/search` with fuzzy matching, `/catalog/resolve`, `/catalog/identify` which uses web search to turn free text into certification candidates), `routes/admin-ops.ts` (`/admin/ops/*`, admin only), and the root-mounted `routes/briefs.ts` (brief, refresh, versions, progress, feedback as star or report, follow), `routes/jobs.ts`, `routes/intake.ts` (multipart intake, held certifications), `routes/my-certifications.ts` (`/me/certifications` grouped by status, bulk add), which declare full paths and must never add path-less `router.use(...)` middleware.
+- `lib/contracts/*.ts`: zod schemas and types shared by routes and services (`brief`, `jobs`, `intake`, `catalog`, `settings`, `ApiErrorCode` / `ApiErrorBody` in `index.ts`). `validateBriefContent` enforces source ids, unique item ids and HTTPS links.
+- Services: `services/openai` (per-user client, key validation, model config), `services/jobs` (queue, handlers, DTOs, recovery), `services/research` (Stage A investigations, Stage B structuring, source filtering, persistence; `__fixtures__/dp-700.sample.json`), `services/intake` (file text extraction, recommendation and held-certification extraction, session recovery), `services/catalog` (search, `fuzzy.ts`, `identify.ts`, validated find-or-create), `services/my-certifications`, `services/ops` (metrics, stale list), `services/scheduler` (node-cron stale refresh).
+- Other `lib/`: `crypto.ts` (AES-256-GCM for stored keys), `abort.ts` (`withChildSignal`: give each job and each OpenAI call its own child AbortSignal; the SDK never removes its abort listeners), `rate-limit.ts` (in-memory), `permissions.ts`, `validation.ts`.
+- Scripts: `scripts/research-cli.ts` (`npm --prefix server run research`), `scripts/seed-sample-brief.ts` (`seed:sample-brief`), `scripts/export-knowledge.ts` (`export:knowledge`); the catalog seed is `prisma/seed/seed.ts` (`db:seed`) with data in `prisma/seed/catalog.json` (aliases carry retired and upcoming codes; see `data/knowledge/EXAM_CHANGES.md`).
+- Authentication is in `middleware/requireAuth.ts`; ownership and admin policy in `lib/permissions.ts`; request validation and sanitization in `lib/validation.ts`.
+
+## API Contracts
+
+- A request/response change must update the zod schema in `server/src/lib/contracts/`, the matching type in `client/src/lib/contracts/`, the route, and the client API function in the same change.
+- New routes return `{ error, code? }` on failure, with `code` from the shared `ApiErrorCode` union (both sides). Pages branch on `error.code`, not on message text.
 
 ## Data and Commands
 
-- `prisma/schema.prisma` is the database source of truth. Add schema changes through a Prisma migration and regenerate the client; never edit `server/src/generated/prisma` directly.
+- `data/knowledge/` holds JSON and Markdown exports of the certification catalog and study briefs (`npm --prefix server run export:knowledge`). This is a temporary safety net while the local database is SQLite; the long-term database structure is still to be decided. Do not build features that read from these files.
+- `prisma/schema.prisma` is the database source of truth. Add schema changes through a Prisma migration and regenerate the client. **Never edit `server/src/generated/prisma`**; it is regenerated by `db:generate`, `dev`, `build` and `start`.
 - Prisma config is in `server/prisma.config.ts`; migrations are stored under `prisma/migrations/`.
-- Use `npm run dev` to run the API and web app, `npm run build` for production builds, and `npm run lint` for linting. Prisma commands are `npm run db:generate` and `npm run db:migrate`.
+- Use `npm run dev` to run the API and web app, `npm run build` for production builds, and `npm run lint` for linting. Prisma commands are `npm run db:generate` and `npm run db:migrate`; seeding is `npm --prefix server run db:seed` and `npm --prefix server run seed:sample-brief`.
+- **Only one API process may run against a SQLite database at a time.** Every API process starts the job worker, so two processes on one `dev.db` compete for queued jobs and cause `SQLITE_BUSY`. Use a separate `DATABASE_URL` (and ports) for a second instance. Scripts that only write data (seed, research CLI) are fine to run alongside.
+- `npm --prefix server run dev` regenerates Prisma first, which restarts any other `tsx watch` process on the same tree.
 - No automated test suite is currently defined. Do not claim tests passed unless a test script or test files have been added and run.
 
 ## Security and Content
 
 - All API routes are protected by `requireAuth`. Keep token signature, issuer, audience, tenant, and user identity validation on the server; client-side visibility is not authorization.
-- Use the authenticated request wrapper in `Portal.tsx` for signed-in API calls so it acquires and attaches the Entra access token.
+- Use `useApi()` from `session.tsx` for signed-in API calls so the Entra access token is acquired and attached.
 - Local auth bypass requires both `VITE_DEV_AUTH_BYPASS=true` and `DEV_AUTH_BYPASS=true`; it must remain disabled in production. `VITE_LOCAL_IS_ADMIN` only changes local UI visibility. Server-side local admin access is controlled separately; production admin access uses verified roles or `ADMIN_OBJECT_IDS`.
-- Preserve server-side owner/admin checks for edits, deletion, review, and moderation. Hidden resources must not leak through list, detail, preview, or download endpoints.
-- Keep uploaded PDFs outside the public client directory. Validate file type, size, and signature, use generated storage names, and serve files only through authenticated API routes.
-- Sanitize rich text and require HTTPS for resource/source links. Preserve contributor rights confirmation and attribution; do not introduce copied exam questions or restricted content.
+- Never return a decrypted OpenAI key to the client and never log one. Keys are stored encrypted (`lib/crypto.ts`); only the last four characters are exposed. Unattended work (scheduler, admin refresh) uses only `OPENAI_SERVER_API_KEY`, never a user's key.
+- Only `UserFacingJobError` / `MissingApiKeyError` messages reach users verbatim from jobs; everything else is mapped to a safe message.
+- Feedback verdicts are `star` and `report` (legacy `accurate` / `inaccurate` / `outdated` rows are mapped on read). A report needs a reason and a comment.
+- Preserve server-side owner/admin checks for edits, deletion, review, moderation, intake sessions, jobs and my-certifications. Hidden resources must not leak through list, detail, preview, or download endpoints.
+- Keep uploaded PDFs outside the public client directory. Validate file type, size, and signature, use generated storage names, and serve files only through authenticated API routes. Intake uploads are parsed in memory and only their extracted text is stored.
+- Sanitize rich text and require HTTPS for resource, source and brief links. Keep exam-dump domains blocked in research (`BLOCKED_RESEARCH_DOMAINS`). Preserve contributor rights confirmation and attribution; do not introduce copied exam questions or restricted content.
 
 ## Change Discipline
 
-- Follow existing TypeScript, React, Express, and Prisma patterns; keep changes focused and update both sides of API contracts when needed.
-- Keep secrets and local `.env` files out of source control. Update `.env.example` when configuration changes.
+- Follow existing TypeScript, React, Express, and Prisma patterns (server ESM imports use the `.js` suffix; zod for validation; `currentUser` for identity, `isAdmin` for admin checks); keep changes focused and update both sides of API contracts when needed.
+- Keep secrets and local `.env` files out of source control. Update the `.env.example` files when configuration changes.

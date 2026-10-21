@@ -10,6 +10,13 @@ import { config } from '../config.js'
 import { currentIdentity, currentUser, canManageCertification, canManageResource, isAdmin } from '../lib/permissions.js'
 import { certificationSchema, communityCommentSchema, communityPostSchema, normalizeKey, resourceMetadataSchema, resourceReportSchema, resourceSchema, validateResourceContent } from '../lib/validation.js'
 import { requireAuth } from '../middleware/requireAuth.js'
+import { adminOpsRouter } from './admin-ops.js'
+import { briefsRouter } from './briefs.js'
+import { catalogRouter } from './catalog.js'
+import { intakeRouter } from './intake.js'
+import { jobsRouter } from './jobs.js'
+import { myCertificationsRouter } from './my-certifications.js'
+import { settingsRouter } from './settings.js'
 
 const router = Router()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxUploadBytes, files: 1 } })
@@ -56,6 +63,15 @@ function resourceMetadataData(metadata: ReturnType<typeof resourceMetadataSchema
 }
 
 router.use(requireAuth)
+
+// AI rework routers. Mounted before the legacy routes; root-mounted routers only match their own full paths.
+router.use('/settings', settingsRouter)
+router.use('/catalog', catalogRouter)
+router.use('/admin/ops', adminOpsRouter)
+router.use(briefsRouter) // /certifications/:id/brief..., /certifications/:id/follow, /briefs/:briefId/feedback
+router.use(jobsRouter) // /jobs/..., /me/jobs
+router.use(intakeRouter) // /intake/..., /me/intake
+router.use(myCertificationsRouter) // /me/certifications...
 
 function resourceDto(resource: ResourceWithDetails) {
   return {
@@ -153,7 +169,8 @@ router.get('/community/leaderboard', async (request, response) => {
   }
   for (const row of comments) totalsFor(row.authorId).comments += row._count._all
   for (const resource of helpfulResources) totalsFor(resource.createdById).helpfulReceived += resource._count.helpfulVotes
-  const members = await prisma.user.findMany({ where: { id: { in: [...totals.keys()] } }, select: { id: true, objectId: true, displayName: true } })
+  // The system user owns the seeded catalog; it is not a contributor.
+  const members = await prisma.user.findMany({ where: { id: { in: [...totals.keys()] }, NOT: { tenantId: 'system' } }, select: { id: true, objectId: true, displayName: true } })
   const ranked = members.flatMap((member) => {
     const memberTotals = totals.get(member.id)
     if (!memberTotals) return []
@@ -261,7 +278,7 @@ router.post('/certifications/:id/resources', upload.single('file'), async (reque
   if (file) {
     const isPdf = file.mimetype === 'application/pdf' && file.originalname.toLocaleLowerCase().endsWith('.pdf') && file.buffer.subarray(0, 5).toString('ascii') === '%PDF-'
     const title = typeof request.body.title === 'string' ? request.body.title.trim().slice(0, 120) : ''
-    let topics: unknown = []
+    let topics: unknown
     try { topics = JSON.parse(typeof request.body.topics === 'string' ? request.body.topics : '[]') } catch { topics = null }
     const metadata = resourceMetadataSchema.safeParse({
       topics,
