@@ -70,6 +70,16 @@ export const resourceReportSchema = z.object({
   message: z.string().trim().max(1000).default(''),
 })
 
+export const communityPostSchema = z.object({
+  kind: z.enum(['IDEA', 'QUESTION']),
+  title: z.string().trim().min(5).max(120),
+  body: z.string().trim().min(1).max(4000),
+})
+
+export const communityCommentSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+})
+
 export function normalizeKey(value: string) {
   return value.normalize('NFKC').trim().toLocaleLowerCase('en-US')
 }

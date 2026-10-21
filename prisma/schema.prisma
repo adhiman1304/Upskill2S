@@ -19,6 +19,8 @@ model User {
   reports     ResourceReport[] @relation("ResourceReportAuthor")
   reviewedResources Resource[] @relation("ResourceReviewer")
   moderatedResources Resource[] @relation("ResourceModerator")
+  communityPosts CommunityPost[] @relation("CommunityPostAuthor")
+  communityComments CommunityComment[] @relation("CommunityCommentAuthor")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -121,4 +123,32 @@ model ResourceReport {
 
   @@index([status, createdAt])
   @@index([resourceId])
+}
+
+model CommunityPost {
+  id        String            @id @default(cuid())
+  kind      String
+  title     String
+  body      String
+  authorId  String
+  author    User              @relation("CommunityPostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  comments  CommunityComment[]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([createdAt])
+  @@index([authorId, createdAt])
+}
+
+model CommunityComment {
+  id        String        @id @default(cuid())
+  body      String
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User          @relation("CommunityCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+
+  @@index([postId, createdAt])
+  @@index([authorId, createdAt])
 }

@@ -2,14 +2,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { MsalProvider, useIsAuthenticated, useMsal } from '@azure/msal-react'
 import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import DOMPurify from 'dompurify'
-import { ArrowDownToLine, ArrowLeft, ArrowUpRight, BadgeCheck, Bookmark, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Eye, EyeOff, FileText, Flag, GraduationCap, Link2, LoaderCircle, LogOut, Plus, Search, ShieldCheck, SlidersHorizontal, Sparkles, Tag, ThumbsUp, Trash2, Upload, XCircle } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeft, ArrowUpRight, Award, BadgeCheck, Bookmark, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Eye, EyeOff, FileText, Flag, GraduationCap, Lightbulb, Link2, LoaderCircle, LogOut, MessageCircle, MessagesSquare, Plus, Search, Send, ShieldCheck, SlidersHorizontal, Sparkles, Tag, ThumbsUp, Trash2, Upload, XCircle } from 'lucide-react'
 import { RichTextEditor } from './components/RichTextEditor'
 import { devAuthBypass, msalInstance, msalScopes, msalSetupComplete } from './auth'
-import { ApiError, apiRequest, getBookmarks, getOpenReports, moderateResource, reportResource, resolveReport, toggleBookmark, toggleHelpful } from './lib/api'
-import type { Certification, CertificationInput, Resource, ResourceInput, ResourceKind, ResourceReport } from './lib/api'
+import { ApiError, apiRequest, createCommunityComment, createCommunityPost, getBookmarks, getCommunityPosts, getContributionSummary, getOpenReports, moderateResource, reportResource, resolveReport, toggleBookmark, toggleHelpful } from './lib/api'
+import type { Certification, CertificationInput, CommunityPost, CommunityPostKind, ContributionSummary, Resource, ResourceInput, ResourceKind, ResourceReport } from './lib/api'
 import './Portal.css'
 import './ProviderDirectory.css'
 import './Features.css'
+import './Community.css'
 
 const labels: Record<ResourceKind, string> = { QUESTION_SET: 'Question set', RICH_TEXT: 'Study notes', LINK: 'Link', PDF: 'PDF' }
 type Requester = <T>(path: string, init?: RequestInit) => Promise<T>
@@ -62,6 +63,7 @@ function AuthenticatedPortal() {
   const [editing, setEditing] = useState<Certification | null>(null)
   const [addingResource, setAddingResource] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
+  const [utilityView, setUtilityView] = useState<'community' | 'contributions' | null>(null)
   const [refresh, setRefresh] = useState(0)
 
   async function signIn() {
@@ -71,13 +73,14 @@ function AuthenticatedPortal() {
   }
   if (!session.authenticated) return <LoginScreen onSignIn={() => void signIn()} error={signInError} />
 
-  function openCertification(certification: Certification) { setSelected(certification); setEditing(null); setAddingResource(false); setSavedOpen(false) }
-  function returnToList() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false) }
+  function openCertification(certification: Certification) { setSelected(certification); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(null) }
+  function returnToList() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(null) }
   function done() { setEditing(null); setAddingResource(false); setRefresh((value) => value + 1) }
-  function openSaved() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(true) }
+  function openSaved() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(true); setUtilityView(null) }
+  function openUtility(view: 'community' | 'contributions') { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(view) }
 
-  return <div className="app-shell"><aside className="sidebar"><Brand /><div className="sidebar-section-label">LIBRARY</div><button className={`nav-link ${!selected && !savedOpen ? 'active' : ''}`} onClick={returnToList}><BookOpen size={17} /> Browse certifications</button><button className={`nav-link ${savedOpen ? 'active' : ''}`} onClick={openSaved}><Bookmark size={17} /> Saved resources</button><div className="sidebar-bottom"><div className="sidebar-note"><Sparkles size={15} /><span>{session.isLocal ? 'Local development mode' : 'Build your next skill path'}</span></div><button className="account-button" onClick={() => void session.signOut()}><span className="avatar">{session.displayName.slice(0, 1).toUpperCase()}</span><span className="account-details"><strong>{session.displayName}</strong><small>{session.isLocal ? 'Authentication disabled' : 'Signed in'}</small></span><LogOut size={15} /></button></div></aside>
-    <main className="main-area">{selected ? <DetailView key={`${selected.id}-${refresh}`} certification={selected} userId={session.userId} isAdmin={session.isAdmin} onBack={returnToList} onEdit={() => setEditing(selected)} onAddResource={() => setAddingResource(true)} onChanged={done} /> : savedOpen ? <SavedResources onBack={returnToList} /> : <Dashboard key={refresh} isAdmin={session.isAdmin} onOpen={openCertification} onCreate={() => setEditing({ id: '', provider: '', code: '', title: '', description: '', status: 'ACTIVE', examVersion: null, examUpdatedAt: null, topics: [], createdById: session.userId, createdByName: session.displayName, resources: [], resourceCount: 0, updatedAt: '' })} />}</main>
+  return <div className="app-shell"><aside className="sidebar"><Brand /><div className="sidebar-section-label">LIBRARY</div><button className={`nav-link ${!selected && !savedOpen && !utilityView ? 'active' : ''}`} onClick={returnToList}><BookOpen size={17} /> Browse certifications</button><button className={`nav-link ${savedOpen ? 'active' : ''}`} onClick={openSaved}><Bookmark size={17} /> Saved resources</button><div className="sidebar-section-label community-nav-label">COMMUNITY</div><button className={`nav-link ${utilityView === 'community' ? 'active' : ''}`} onClick={() => openUtility('community')}><MessagesSquare size={17} /> Ideas &amp; questions</button><button className={`nav-link ${utilityView === 'contributions' ? 'active' : ''}`} onClick={() => openUtility('contributions')}><Award size={17} /> My contributions</button><div className="sidebar-bottom"><div className="sidebar-note"><Sparkles size={15} /><span>{session.isLocal ? 'Local development mode' : 'Build your next skill path'}</span></div><button className="account-button" onClick={() => void session.signOut()}><span className="avatar">{session.displayName.slice(0, 1).toUpperCase()}</span><span className="account-details"><strong>{session.displayName}</strong><small>{session.isLocal ? 'Authentication disabled' : 'Signed in'}</small></span><LogOut size={15} /></button></div></aside>
+    <main className="main-area">{selected ? <DetailView key={`${selected.id}-${refresh}`} certification={selected} userId={session.userId} isAdmin={session.isAdmin} onBack={returnToList} onEdit={() => setEditing(selected)} onAddResource={() => setAddingResource(true)} onChanged={done} /> : savedOpen ? <SavedResources onBack={returnToList} /> : utilityView === 'community' ? <CommunityBoard /> : utilityView === 'contributions' ? <ContributionHistory /> : <Dashboard key={refresh} isAdmin={session.isAdmin} onOpen={openCertification} onCreate={() => setEditing({ id: '', provider: '', code: '', title: '', description: '', status: 'ACTIVE', examVersion: null, examUpdatedAt: null, topics: [], createdById: session.userId, createdByName: session.displayName, resources: [], resourceCount: 0, updatedAt: '' })} />}</main>
     {editing && <CertificationDialog existing={editing.id ? editing : undefined} onClose={() => setEditing(null)} onSaved={(item) => { setSelected(item); done() }} />}
     {addingResource && selected && <ResourceDialog certification={selected} onClose={() => setAddingResource(false)} onSaved={done} />}
   </div>
@@ -217,6 +220,144 @@ function ProviderLogo({ name, domain }: { name: string; domain?: string }) {
   const logoDomain = domain ?? providerLogoDomains[name.toLowerCase()]
   const [logoFailed, setLogoFailed] = useState(false)
   return logoDomain && !logoFailed ? <img src={`https://www.google.com/s2/favicons?domain=${logoDomain}&sz=128`} alt="" aria-hidden="true" loading="lazy" onError={() => setLogoFailed(true)} /> : <span aria-hidden="true">{name.trim().slice(0, 1).toUpperCase()}</span>
+}
+
+function CommunityBoard() {
+  const request = useApi()
+  const [posts, setPosts] = useState<CommunityPost[]>([])
+  const [filter, setFilter] = useState<'ALL' | CommunityPostKind>('ALL')
+  const [kind, setKind] = useState<CommunityPostKind>('IDEA')
+  const [title, setTitle] = useState('')
+  const [body, setBody] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
+  const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(true)
+  const [posting, setPosting] = useState(false)
+  const [commentingId, setCommentingId] = useState<string | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getCommunityPosts(request).then((data) => { if (active) { setPosts(data); setError('') } }).catch((reason: unknown) => { if (active) setError(message(reason, 'Could not load ideas and questions.')) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [request])
+
+  async function submitPost(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setPosting(true)
+    setError('')
+    try {
+      const created = await createCommunityPost(request, { kind, title: title.trim(), body: body.trim() })
+      setPosts((current) => [created, ...current])
+      setTitle('')
+      setBody('')
+    }
+    catch (reason) { setError(message(reason, 'Could not post. Check the title and details.')) }
+    finally { setPosting(false) }
+  }
+
+  async function submitComment(postId: string) {
+    const text = (drafts[postId] ?? '').trim()
+    if (!text) return
+    setCommentingId(postId)
+    setError('')
+    try {
+      const comment = await createCommunityComment(request, postId, text)
+      setPosts((current) => current.map((post) => post.id === postId ? { ...post, comments: [...post.comments, comment], commentCount: post.commentCount + 1 } : post))
+      setDrafts((current) => ({ ...current, [postId]: '' }))
+    }
+    catch (reason) { setError(message(reason, 'Could not add your comment.')) }
+    finally { setCommentingId(null) }
+  }
+
+  const ideaCount = posts.filter((post) => post.kind === 'IDEA').length
+  const questionCount = posts.length - ideaCount
+  const visible = filter === 'ALL' ? posts : posts.filter((post) => post.kind === filter)
+  const canPost = !posting && title.trim().length >= 5 && body.trim().length > 0
+  const filters: { value: 'ALL' | CommunityPostKind; label: string; count: number }[] = [
+    { value: 'ALL', label: 'All', count: posts.length },
+    { value: 'IDEA', label: 'Ideas', count: ideaCount },
+    { value: 'QUESTION', label: 'Questions', count: questionCount },
+  ]
+
+  return <div className="page-content community-page">
+    <header className="topbar"><div><p className="breadcrumb">COMMUNITY <span>/</span> IDEAS &amp; QUESTIONS</p><h1>Ideas &amp; questions</h1></div></header>
+    <p className="muted community-intro">Suggest an improvement or ask the community for help. Anyone signed in can reply.</p>
+    {error && <div className="alert error" role="alert">{error}</div>}
+    <form className="community-composer" onSubmit={(event) => void submitPost(event)}>
+      <div className="segmented" role="group" aria-label="Post type">
+        <button type="button" className={kind === 'IDEA' ? 'active' : ''} onClick={() => setKind('IDEA')}><Lightbulb size={15} /> Idea</button>
+        <button type="button" className={kind === 'QUESTION' ? 'active' : ''} onClick={() => setKind('QUESTION')}><CircleHelp size={15} /> Question</button>
+      </div>
+      <input className="community-input" value={title} maxLength={120} onChange={(event) => setTitle(event.target.value)} placeholder={kind === 'IDEA' ? 'Summarize your idea' : 'What would you like to ask?'} aria-label="Title" />
+      <textarea className="community-input" value={body} maxLength={4000} rows={3} onChange={(event) => setBody(event.target.value)} placeholder="Add details" aria-label="Details" />
+      <div className="community-composer-footer"><button className="button button-primary" type="submit" disabled={!canPost}><Send size={15} /> {posting ? 'Posting' : 'Post'}</button></div>
+    </form>
+    <div className="community-filters" role="tablist">
+      {filters.map((item) => <button key={item.value} role="tab" aria-selected={filter === item.value} className={filter === item.value ? 'active' : ''} onClick={() => setFilter(item.value)}>{item.label} <span>{item.count}</span></button>)}
+    </div>
+    {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading ideas and questions</div> : visible.length ? <div className="post-list">
+      {visible.map((post) => {
+        const open = openId === post.id
+        const draft = drafts[post.id] ?? ''
+        return <article key={post.id} className="post-card">
+          <div className="post-meta"><span className={`post-kind ${post.kind.toLowerCase()}`}>{post.kind === 'IDEA' ? <Lightbulb size={13} /> : <CircleHelp size={13} />} {post.kind === 'IDEA' ? 'Idea' : 'Question'}</span><span><Clock3 size={13} /> {formatDate(post.createdAt)} · {post.authorName}</span></div>
+          <h3>{post.title}</h3>
+          <p className="post-body">{post.body}</p>
+          <button className="post-comments-toggle" onClick={() => setOpenId(open ? null : post.id)} aria-expanded={open}><MessageCircle size={15} /> {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}</button>
+          {open && <div className="post-comments">
+            {post.comments.map((comment) => <div key={comment.id} className="comment"><strong>{comment.authorName}</strong><span>{formatDate(comment.createdAt)}</span><p>{comment.body}</p></div>)}
+            <div className="comment-form">
+              <textarea value={draft} maxLength={2000} rows={2} placeholder="Write a reply" aria-label="Reply" onChange={(event) => setDrafts((current) => ({ ...current, [post.id]: event.target.value }))} />
+              <button className="button button-secondary" type="button" disabled={!draft.trim() || commentingId === post.id} onClick={() => void submitComment(post.id)}><Send size={14} /> Reply</button>
+            </div>
+          </div>}
+        </article>
+      })}
+    </div> : <div className="empty-state"><div className="empty-icon"><MessagesSquare size={21} /></div><h3>No {filter === 'ALL' ? 'ideas or questions' : filter === 'IDEA' ? 'ideas' : 'questions'} yet</h3><p>Start the conversation. Ideas shape the library; questions get answered by the community.</p></div>}
+  </div>
+}
+
+const activityLabels: Record<string, string> = { certification: 'Certification', resource: 'Resource', idea: 'Idea', question: 'Question', comment: 'Comment' }
+
+function ContributionHistory() {
+  const request = useApi()
+  const [summary, setSummary] = useState<ContributionSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getContributionSummary(request).then((data) => { if (active) { setSummary(data); setError('') } }).catch((reason: unknown) => { if (active) setError(message(reason, 'Could not load your contributions.')) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [request])
+
+  const stats = summary ? [
+    { label: 'Certifications added', value: summary.counts.certifications, icon: <GraduationCap size={16} /> },
+    { label: 'Resources shared', value: summary.counts.resources, icon: <FileText size={16} /> },
+    { label: 'Ideas posted', value: summary.counts.ideas, icon: <Lightbulb size={16} /> },
+    { label: 'Questions asked', value: summary.counts.questions, icon: <CircleHelp size={16} /> },
+    { label: 'Comments', value: summary.counts.comments, icon: <MessageCircle size={16} /> },
+    { label: 'Helpful votes received', value: summary.counts.helpfulReceived, icon: <ThumbsUp size={16} /> },
+  ] : []
+
+  return <div className="page-content community-page">
+    <header className="topbar"><div><p className="breadcrumb">COMMUNITY <span>/</span> CONTRIBUTIONS</p><h1>My contributions</h1></div></header>
+    {error && <div className="alert error" role="alert">{error}</div>}
+    {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading your contributions</div> : summary && <>
+      <div className="contribution-stats">
+        {stats.map((stat) => <div key={stat.label} className="contribution-stat"><span className="contribution-stat-icon">{stat.icon}</span><strong>{stat.value}</strong><small>{stat.label}</small></div>)}
+      </div>
+      <section className="contribution-section">
+        <h2>Recognition</h2>
+        {summary.badges.length ? <div className="badge-list">{summary.badges.map((badge) => <div key={badge.id} className="recognition-badge"><Award size={18} /><div><strong>{badge.label}</strong><small>{badge.detail}</small></div></div>)}</div> : <p className="muted">Badges appear as you add certifications, join discussions, and receive helpful votes.</p>}
+      </section>
+      <section className="contribution-section">
+        <h2>History</h2>
+        {summary.activity.length ? <ol className="activity-list">{summary.activity.map((item) => <li key={item.id}><span className={`activity-kind ${item.kind}`}>{activityLabels[item.kind] ?? item.kind}</span><div><strong>{item.title}</strong><small>{item.detail}</small></div><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></li>)}</ol> : <div className="empty-state"><div className="empty-icon"><Award size={21} /></div><h3>No contributions yet</h3><p>Add a certification, share a resource, or post an idea to start your history.</p></div>}
+      </section>
+    </>}
+  </div>
 }
 
 function SavedResources({ onBack }: { onBack: () => void }) {

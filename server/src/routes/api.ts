@@ -8,7 +8,7 @@ import type { Certification as CertificationModel, Resource as ResourceModel, Us
 import { prisma } from '../database.js'
 import { config } from '../config.js'
 import { currentIdentity, currentUser, canManageCertification, canManageResource, isAdmin } from '../lib/permissions.js'
-import { certificationSchema, normalizeKey, resourceMetadataSchema, resourceReportSchema, resourceSchema, validateResourceContent } from '../lib/validation.js'
+import { certificationSchema, communityCommentSchema, communityPostSchema, normalizeKey, resourceMetadataSchema, resourceReportSchema, resourceSchema, validateResourceContent } from '../lib/validation.js'
 import { requireAuth } from '../middleware/requireAuth.js'
 
 const router = Router()
@@ -16,6 +16,11 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: con
 const resourceTypes = ['QUESTION_SET', 'RICH_TEXT', 'LINK', 'PDF'] as const
 const routeParam = (value: string | string[] | undefined) => typeof value === 'string' ? value : value?.[0] ?? ''
 type ResourceWithDetails = ResourceModel & { createdBy: User; bookmarks?: { id: string }[]; helpfulVotes?: { id: string }[]; _count?: { helpfulVotes: number } }
+const communityPostInclude = {
+  author: { select: { id: true, displayName: true } },
+  comments: { take: 20, orderBy: { createdAt: 'desc' as const }, include: { author: { select: { id: true, displayName: true } } } },
+  _count: { select: { comments: true } },
+} satisfies Prisma.CommunityPostInclude
 
 function resourceInclude(userId: string) {
   return {
@@ -77,9 +82,71 @@ function certificationDto(certification: CertificationModel & { createdBy: User;
   }
 }
 
+function communityPostDto(post: Prisma.CommunityPostGetPayload<{ include: typeof communityPostInclude }>) {
+  return {
+    id: post.id, kind: post.kind, title: post.title, body: post.body,
+    authorId: post.author.id, authorName: post.author.displayName, createdAt: post.createdAt.toISOString(),
+    commentCount: post._count.comments,
+    comments: [...post.comments].reverse().map((comment) => ({
+      id: comment.id, body: comment.body, authorId: comment.author.id,
+      authorName: comment.author.displayName, createdAt: comment.createdAt.toISOString(),
+    })),
+  }
+}
+
 router.get('/me', async (request, response) => {
   const user = await currentUser(request)
   response.json({ userId: user.objectId, displayName: user.displayName, isAdmin: isAdmin(request), isLocalDevelopment: currentIdentity(request).tenantId === 'local-development' })
+})
+
+router.get('/me/contributions', async (request, response) => {
+  const user = await currentUser(request)
+  const [certificationCount, resourceCount, postCount, commentCount, helpfulReceived, certifications, resources, posts, comments] = await Promise.all([
+    prisma.certification.count({ where: { createdById: user.id } }),
+    prisma.resource.count({ where: { createdById: user.id, isVisible: true } }),
+    prisma.communityPost.count({ where: { authorId: user.id } }),
+    prisma.communityComment.count({ where: { authorId: user.id } }),
+    prisma.resourceHelpfulVote.count({ where: { resource: { createdById: user.id, isVisible: true } } }),
+    prisma.certification.findMany({ where: { createdById: user.id }, select: { id: true, provider: true, code: true, title: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.resource.findMany({ where: { createdById: user.id, isVisible: true }, select: { id: true, title: true, createdAt: true, certification: { select: { provider: true, code: true } } }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.communityPost.findMany({ where: { authorId: user.id }, select: { id: true, kind: true, title: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 20 }),
+    prisma.communityComment.findMany({ where: { authorId: user.id }, select: { id: true, body: true, createdAt: true, post: { select: { title: true } } }, orderBy: { createdAt: 'desc' }, take: 20 }),
+  ])
+  const activity = [
+    ...certifications.map((item) => ({ id: `certification-${item.id}`, kind: 'certification', title: item.title, detail: `${item.provider} · ${item.code}`, createdAt: item.createdAt.toISOString() })),
+    ...resources.map((item) => ({ id: `resource-${item.id}`, kind: 'resource', title: item.title, detail: `${item.certification.provider} · ${item.certification.code}`, createdAt: item.createdAt.toISOString() })),
+    ...posts.map((item) => ({ id: `post-${item.id}`, kind: item.kind.toLowerCase(), title: item.title, detail: item.kind === 'IDEA' ? 'Idea posted' : 'Question posted', createdAt: item.createdAt.toISOString() })),
+    ...comments.map((item) => ({ id: `comment-${item.id}`, kind: 'comment', title: item.body.slice(0, 120), detail: `Comment on ${item.post.title}`, createdAt: item.createdAt.toISOString() })),
+  ].sort((first, second) => second.createdAt.localeCompare(first.createdAt)).slice(0, 30)
+  const badges = []
+  if (certificationCount + resourceCount > 0) badges.push({ id: 'knowledge-sharer', label: 'Knowledge sharer', detail: 'Added to the certification library.' })
+  if (postCount + commentCount >= 5) badges.push({ id: 'community-voice', label: 'Community voice', detail: 'Joined five community discussions.' })
+  if (helpfulReceived >= 3) badges.push({ id: 'helpful-contributor', label: 'Helpful contributor', detail: 'Resources received at least three helpful votes.' })
+  response.json({ counts: { certifications: certificationCount, resources: resourceCount, ideas: await prisma.communityPost.count({ where: { authorId: user.id, kind: 'IDEA' } }), questions: await prisma.communityPost.count({ where: { authorId: user.id, kind: 'QUESTION' } }), comments: commentCount, helpfulReceived }, badges, activity })
+})
+
+router.get('/community/posts', async (_request, response) => {
+  const posts = await prisma.communityPost.findMany({ orderBy: { createdAt: 'desc' }, take: 100, include: communityPostInclude })
+  response.json(posts.map(communityPostDto))
+})
+
+router.post('/community/posts', async (request, response) => {
+  const parsed = communityPostSchema.safeParse(request.body)
+  if (!parsed.success) { response.status(400).json({ error: 'Choose an idea or question and check the title and details.' }); return }
+  const user = await currentUser(request)
+  const post = await prisma.communityPost.create({ data: { ...parsed.data, authorId: user.id }, include: communityPostInclude })
+  response.status(201).json(communityPostDto(post))
+})
+
+router.post('/community/posts/:id/comments', async (request, response) => {
+  const parsed = communityCommentSchema.safeParse(request.body)
+  if (!parsed.success) { response.status(400).json({ error: 'Write a comment of up to 2,000 characters.' }); return }
+  const postId = routeParam(request.params.id)
+  const postExists = await prisma.communityPost.findUnique({ where: { id: postId }, select: { id: true } })
+  if (!postExists) { response.status(404).json({ error: 'Discussion not found.' }); return }
+  const user = await currentUser(request)
+  const comment = await prisma.communityComment.create({ data: { ...parsed.data, postId, authorId: user.id }, include: { author: { select: { id: true, displayName: true } } } })
+  response.status(201).json({ id: comment.id, body: comment.body, authorId: comment.author.id, authorName: comment.author.displayName, createdAt: comment.createdAt.toISOString() })
 })
 
 router.get('/certifications', async (request, response) => {

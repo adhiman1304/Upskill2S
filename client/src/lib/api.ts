@@ -21,6 +21,14 @@ export interface Certification {
 export interface CertificationInput { provider: string; code: string; title: string; description: string; status: 'ACTIVE' | 'RETIRED'; examVersion: string; examUpdatedAt: string | null }
 export interface ResourceInput { type: ResourceKind; title: string; content: Record<string, unknown>; topics: string[]; language: string; estimatedMinutes: number | null; sourceName: string; sourceUrl: string; rightsConfirmed: boolean }
 export interface ResourceReport { id: string; category: string; message: string; createdAt: string; reporterName: string; resource: Resource }
+export type CommunityPostKind = 'IDEA' | 'QUESTION'
+export interface CommunityComment { id: string; body: string; authorId: string; authorName: string; createdAt: string }
+export interface CommunityPost { id: string; kind: CommunityPostKind; title: string; body: string; authorId: string; authorName: string; createdAt: string; commentCount: number; comments: CommunityComment[] }
+export interface ContributionSummary {
+  counts: { certifications: number; resources: number; ideas: number; questions: number; comments: number; helpfulReceived: number }
+  badges: { id: string; label: string; detail: string }[]
+  activity: { id: string; kind: string; title: string; detail: string; createdAt: string }[]
+}
 type AuthenticatedRequest = <T>(path: string, init?: RequestInit) => Promise<T>
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/$/, '')
@@ -61,6 +69,10 @@ export function reportResource(request: AuthenticatedRequest, resourceId: string
 export function getOpenReports(request: AuthenticatedRequest) { return request<ResourceReport[]>('/api/admin/reports') }
 export function resolveReport(request: AuthenticatedRequest, id: string, status: 'RESOLVED' | 'DISMISSED') { return request<{ id: string; status: string }>(`/api/admin/reports/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status }) }) }
 export function moderateResource(request: AuthenticatedRequest, id: string, input: { isVisible?: boolean; reviewed?: boolean }) { return request<Resource>(`/api/admin/resources/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(input) }) }
+export function getCommunityPosts(request: AuthenticatedRequest) { return request<CommunityPost[]>('/api/community/posts') }
+export function createCommunityPost(request: AuthenticatedRequest, input: { kind: CommunityPostKind; title: string; body: string }) { return request<CommunityPost>('/api/community/posts', { method: 'POST', body: JSON.stringify(input) }) }
+export function createCommunityComment(request: AuthenticatedRequest, postId: string, body: string) { return request<CommunityComment>(`/api/community/posts/${encodeURIComponent(postId)}/comments`, { method: 'POST', body: JSON.stringify({ body }) }) }
+export function getContributionSummary(request: AuthenticatedRequest) { return request<ContributionSummary>('/api/me/contributions') }
 
 export async function downloadResource(request: AuthenticatedRequest, resourceId: string) {
   const blob = await request<Blob>(`/api/resources/${encodeURIComponent(resourceId)}/file`)
