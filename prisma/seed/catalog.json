@@ -1,0 +1,37 @@
+[
+  {
+    "provider": "Microsoft",
+    "code": "AZ-900",
+    "title": "Microsoft Azure Fundamentals",
+    "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/azure-fundamentals/",
+    "aliases": ["Azure Fundamentals", "AZ900"]
+  },
+  {
+    "provider": "Microsoft",
+    "code": "DP-700",
+    "title": "Microsoft Certified: Fabric Data Engineer Associate",
+    "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/",
+    "aliases": ["Fabric Data Engineer", "DP700"]
+  },
+  {
+    "provider": "AWS",
+    "code": "SAA-C03",
+    "title": "AWS Certified Solutions Architect - Associate",
+    "officialUrl": "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
+    "aliases": ["AWS Solutions Architect Associate", "SAA"]
+  },
+  {
+    "provider": "Google Cloud",
+    "code": "ACE",
+    "title": "Google Cloud Associate Cloud Engineer",
+    "officialUrl": "https://cloud.google.com/learn/certification/cloud-engineer",
+    "aliases": ["Associate Cloud Engineer", "GCP ACE"]
+  },
+  {
+    "provider": "CompTIA",
+    "code": "SY0-701",
+    "title": "CompTIA Security+",
+    "officialUrl": "https://www.comptia.org/certifications/security",
+    "aliases": ["Security+", "Sec+"]
+  }
+]

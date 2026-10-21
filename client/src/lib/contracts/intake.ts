@@ -1,0 +1,4 @@
+// Mirrors docs/AI_REWORK_PLAN.md section 5.2 (types only).
+export interface IntakeRecommendation { rank: number; provider: string; code: string; title: string; officialUrl: string | null; level: 'fundamental' | 'associate' | 'professional' | 'specialty' | 'expert' | 'unknown'; whyFit: string; prerequisites: string[]; estimatedPrepWeeks: number | null; matchedSignals: string[] }
+export interface IntakeResult { profileSummary: string; detectedSkills: string[]; goals: string[]; recommendations: IntakeRecommendation[]; followUpQuestions: string[] }
+export interface IntakeSessionDto { id: string; status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'; inputText: string; attachments: { name: string; mimeType: string; size: number; chars: number }[]; result: IntakeResult | null; error: string | null; jobId: string | null; createdAt: string }

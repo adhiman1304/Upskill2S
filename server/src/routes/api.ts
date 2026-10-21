@@ -10,6 +10,12 @@ import { config } from '../config.js'
 import { currentIdentity, currentUser, canManageCertification, canManageResource, isAdmin } from '../lib/permissions.js'
 import { certificationSchema, communityCommentSchema, communityPostSchema, normalizeKey, resourceMetadataSchema, resourceReportSchema, resourceSchema, validateResourceContent } from '../lib/validation.js'
 import { requireAuth } from '../middleware/requireAuth.js'
+import { adminOpsRouter } from './admin-ops.js'
+import { briefsRouter } from './briefs.js'
+import { catalogRouter } from './catalog.js'
+import { intakeRouter } from './intake.js'
+import { jobsRouter } from './jobs.js'
+import { settingsRouter } from './settings.js'
 
 const router = Router()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxUploadBytes, files: 1 } })
@@ -56,6 +62,14 @@ function resourceMetadataData(metadata: ReturnType<typeof resourceMetadataSchema
 }
 
 router.use(requireAuth)
+
+// AI rework routers. Mounted before the legacy routes; root-mounted routers only match their own full paths.
+router.use('/settings', settingsRouter)
+router.use('/catalog', catalogRouter)
+router.use('/admin/ops', adminOpsRouter)
+router.use(briefsRouter) // /certifications/:id/brief..., /certifications/:id/follow, /briefs/:briefId/feedback
+router.use(jobsRouter) // /jobs/..., /me/jobs
+router.use(intakeRouter) // /intake/..., /me/intake
 
 function resourceDto(resource: ResourceWithDetails) {
   return {

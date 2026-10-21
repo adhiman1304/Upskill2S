@@ -6,6 +6,8 @@ import { Prisma } from './generated/prisma/client.js'
 import { config } from './config.js'
 import { prisma } from './database.js'
 import { apiRouter } from './routes/api.js'
+import { registerHandlers } from './services/jobs/handlers.js'
+import { recoverInterruptedJobs, startJobWorker, stopJobWorker } from './services/jobs/queue.js'
 
 const app = express()
 app.disable('x-powered-by')
@@ -27,7 +29,17 @@ app.use((error: unknown, _request: express.Request, response: express.Response, 
   response.status(500).json({ error: 'An unexpected server error occurred.' })
 })
 
+registerHandlers()
+await recoverInterruptedJobs()
+startJobWorker()
+
 const server = app.listen(config.port, () => console.log(`Upskill API listening on http://localhost:${config.port}`))
+let shuttingDown = false
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(signal, () => server.close(async () => { await prisma.$disconnect(); process.exit(0) }))
+  process.on(signal, () => {
+    if (shuttingDown) return
+    shuttingDown = true
+    const workerStopped = stopJobWorker()
+    server.close(async () => { await workerStopped; await prisma.$disconnect(); process.exit(0) })
+  })
 }

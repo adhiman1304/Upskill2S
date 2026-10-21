@@ -1,0 +1,2 @@
+// Mirrors docs/AI_REWORK_PLAN.md section 5.2 (types only).
+export interface JobDto { id: string; kind: 'BRIEF' | 'REFRESH' | 'INTAKE'; status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED'; certificationId: string | null; intakeSessionId: string | null; resultBriefId: string | null; progress: { at: string; message: string }[]; error: string | null; createdAt: string; startedAt: string | null; finishedAt: string | null }
