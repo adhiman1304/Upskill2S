@@ -350,7 +350,7 @@ function ContributionHistory() {
       </div>
       <section className="contribution-section">
         <h2>Recognition</h2>
-        {summary.badges.length ? <div className="badge-list">{summary.badges.map((badge) => <div key={badge.id} className="recognition-badge"><Award size={18} /><div><strong>{badge.label}</strong><small>{badge.detail}</small></div></div>)}</div> : <p className="muted">Badges appear as you add certifications, join discussions, and receive helpful votes.</p>}
+        {summary.badges.length ? <div className="badge-list">{summary.badges.map((badge) => <div key={badge.id} className={`recognition-badge ${badge.id}`}><span className="recognition-badge-icon"><Award size={18} /></span><div><strong>{badge.label}</strong><small>{badge.detail}</small></div></div>)}</div> : <p className="muted">Badges appear as you add certifications, join discussions, and receive helpful votes.</p>}
       </section>
       <section className="contribution-section">
         <h2>History</h2>
@@ -394,11 +394,14 @@ function ContributorDashboard() {
         <div className="contribution-stat"><span className="contribution-stat-icon"><Award size={16} /></span><strong>{me ? `#${me.rank}` : '–'}</strong><small>Your rank</small></div>
         <div className="contribution-stat"><span className="contribution-stat-icon"><Sparkles size={16} /></span><strong>{me?.score ?? 0}</strong><small>Your score</small></div>
       </div>
-      <p className="muted community-intro">Points: {contributionLabels.map((item) => `${item.label} x${board.weights[item.key]}`).join(' · ')}</p>
+      <section className="score-guide" aria-label="How leaderboard points are calculated">
+        <div className="score-guide-copy"><strong>How points work</strong><span>Earn points for every contribution and helpful vote.</span></div>
+        <div className="score-guide-chips">{contributionLabels.map((item) => <span key={item.key} className={`score-guide-chip ${item.key}`}><span>{item.label}</span><strong>+{board.weights[item.key]}</strong></span>)}</div>
+      </section>
       {contributors.length ? <ol className="leaderboard-list">{contributors.map((item) => <li key={item.userId} className={`leaderboard-row ${item.isCurrentUser ? 'is-me' : ''}`}>
-        <span className={`leaderboard-rank ${item.rank <= 3 ? `top-${item.rank}` : ''}`}>{item.rank}</span>
-        <span className="leaderboard-avatar">{item.displayName.slice(0, 1).toUpperCase()}</span>
-        <div className="leaderboard-name"><strong>{item.displayName}{item.isCurrentUser && <em>You</em>}</strong><div className="leaderboard-breakdown">{contributionLabels.filter((label) => item.counts[label.key] > 0).map((label) => <span key={label.key}>{item.counts[label.key]} {label.label.toLowerCase()}</span>)}</div></div>
+        <span className={`leaderboard-rank ${item.rank <= 3 ? `top-${item.rank}` : ''}`} aria-label={`Rank ${item.rank}`}>{item.rank}</span>
+        <span className={`leaderboard-avatar ${item.rank <= 3 ? `top-${item.rank}` : ''}`}>{item.displayName.slice(0, 1).toUpperCase()}</span>
+        <div className="leaderboard-name"><strong>{item.displayName}{item.isCurrentUser && <em>You</em>}</strong><div className="leaderboard-breakdown">{contributionLabels.filter((label) => item.counts[label.key] > 0).map((label) => <span key={label.key} className={`contribution-chip ${label.key}`}>{item.counts[label.key]} {label.label.toLowerCase()}</span>)}</div></div>
         <strong className="leaderboard-score">{item.score}<small>points</small></strong>
       </li>)}</ol> : <div className="empty-state"><div className="empty-icon"><Trophy size={21} /></div><h3>No contributions yet</h3><p>Scores appear once people add certifications, share resources, post ideas or questions, comment, or receive helpful votes.</p></div>}
     </>}
