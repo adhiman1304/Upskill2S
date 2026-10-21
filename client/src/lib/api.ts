@@ -29,6 +29,9 @@ export interface ContributionSummary {
   badges: { id: string; label: string; detail: string }[]
   activity: { id: string; kind: string; title: string; detail: string; createdAt: string }[]
 }
+export interface ContributorCounts { certifications: number; resources: number; ideas: number; questions: number; comments: number; helpfulReceived: number }
+export interface ContributorRank { rank: number; userId: string; displayName: string; score: number; isCurrentUser: boolean; counts: ContributorCounts }
+export interface ContributorLeaderboard { weights: ContributorCounts; contributors: ContributorRank[] }
 type AuthenticatedRequest = <T>(path: string, init?: RequestInit) => Promise<T>
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/$/, '')
@@ -73,6 +76,7 @@ export function getCommunityPosts(request: AuthenticatedRequest) { return reques
 export function createCommunityPost(request: AuthenticatedRequest, input: { kind: CommunityPostKind; title: string; body: string }) { return request<CommunityPost>('/api/community/posts', { method: 'POST', body: JSON.stringify(input) }) }
 export function createCommunityComment(request: AuthenticatedRequest, postId: string, body: string) { return request<CommunityComment>(`/api/community/posts/${encodeURIComponent(postId)}/comments`, { method: 'POST', body: JSON.stringify({ body }) }) }
 export function getContributionSummary(request: AuthenticatedRequest) { return request<ContributionSummary>('/api/me/contributions') }
+export function getContributorLeaderboard(request: AuthenticatedRequest) { return request<ContributorLeaderboard>('/api/community/leaderboard') }
 
 export async function downloadResource(request: AuthenticatedRequest, resourceId: string) {
   const blob = await request<Blob>(`/api/resources/${encodeURIComponent(resourceId)}/file`)

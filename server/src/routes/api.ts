@@ -125,6 +125,45 @@ router.get('/me/contributions', async (request, response) => {
   response.json({ counts: { certifications: certificationCount, resources: resourceCount, ideas: await prisma.communityPost.count({ where: { authorId: user.id, kind: 'IDEA' } }), questions: await prisma.communityPost.count({ where: { authorId: user.id, kind: 'QUESTION' } }), comments: commentCount, helpfulReceived }, badges, activity })
 })
 
+const contributionWeights = { certifications: 5, resources: 4, ideas: 3, questions: 2, comments: 1, helpfulReceived: 2 }
+
+router.get('/community/leaderboard', async (request, response) => {
+  const user = await currentUser(request)
+  const [certifications, resources, posts, comments, helpfulResources] = await Promise.all([
+    prisma.certification.groupBy({ by: ['createdById'], _count: { _all: true } }),
+    prisma.resource.groupBy({ by: ['createdById'], where: { isVisible: true }, _count: { _all: true } }),
+    prisma.communityPost.groupBy({ by: ['authorId', 'kind'], _count: { _all: true } }),
+    prisma.communityComment.groupBy({ by: ['authorId'], _count: { _all: true } }),
+    prisma.resource.findMany({ where: { isVisible: true, helpfulVotes: { some: {} } }, select: { createdById: true, _count: { select: { helpfulVotes: true } } } }),
+  ])
+  const totals = new Map<string, Record<keyof typeof contributionWeights, number>>()
+  const totalsFor = (userId: string) => {
+    const existing = totals.get(userId)
+    if (existing) return existing
+    const created = { certifications: 0, resources: 0, ideas: 0, questions: 0, comments: 0, helpfulReceived: 0 }
+    totals.set(userId, created)
+    return created
+  }
+  for (const row of certifications) totalsFor(row.createdById).certifications += row._count._all
+  for (const row of resources) totalsFor(row.createdById).resources += row._count._all
+  for (const row of posts) {
+    const memberTotals = totalsFor(row.authorId)
+    if (row.kind === 'IDEA') memberTotals.ideas += row._count._all
+    else memberTotals.questions += row._count._all
+  }
+  for (const row of comments) totalsFor(row.authorId).comments += row._count._all
+  for (const resource of helpfulResources) totalsFor(resource.createdById).helpfulReceived += resource._count.helpfulVotes
+  const members = await prisma.user.findMany({ where: { id: { in: [...totals.keys()] } }, select: { id: true, objectId: true, displayName: true } })
+  const ranked = members.flatMap((member) => {
+    const memberTotals = totals.get(member.id)
+    if (!memberTotals) return []
+    const score = (Object.keys(contributionWeights) as (keyof typeof contributionWeights)[]).reduce((sum, key) => sum + memberTotals[key] * contributionWeights[key], 0)
+    return score > 0 ? [{ userId: member.objectId, displayName: member.displayName, score, counts: memberTotals, isCurrentUser: member.objectId === user.objectId }] : []
+  }).sort((first, second) => second.score - first.score || first.displayName.localeCompare(second.displayName))
+  const contributors = ranked.map((item) => ({ rank: ranked.findIndex((other) => other.score === item.score) + 1, ...item }))
+  response.json({ weights: contributionWeights, contributors })
+})
+
 router.get('/community/posts', async (_request, response) => {
   const posts = await prisma.communityPost.findMany({ orderBy: { createdAt: 'desc' }, take: 100, include: communityPostInclude })
   response.json(posts.map(communityPostDto))

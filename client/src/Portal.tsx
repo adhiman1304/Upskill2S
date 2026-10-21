@@ -2,11 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { MsalProvider, useIsAuthenticated, useMsal } from '@azure/msal-react'
 import { InteractionRequiredAuthError } from '@azure/msal-browser'
 import DOMPurify from 'dompurify'
-import { ArrowDownToLine, ArrowLeft, ArrowUpRight, Award, BadgeCheck, Bookmark, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Eye, EyeOff, FileText, Flag, GraduationCap, Lightbulb, Link2, LoaderCircle, LogOut, MessageCircle, MessagesSquare, Plus, Search, Send, ShieldCheck, SlidersHorizontal, Sparkles, Tag, ThumbsUp, Trash2, Upload, XCircle } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeft, ArrowUpRight, Award, BadgeCheck, Bookmark, BookOpen, CalendarDays, Check, ChevronDown, CircleHelp, Clock3, Eye, EyeOff, FileText, Flag, GraduationCap, Lightbulb, Link2, LoaderCircle, LogOut, MessageCircle, MessagesSquare, Plus, Search, Send, ShieldCheck, SlidersHorizontal, Sparkles, Tag, ThumbsUp, Trash2, Trophy, Upload, Users, XCircle } from 'lucide-react'
 import { RichTextEditor } from './components/RichTextEditor'
 import { devAuthBypass, msalInstance, msalScopes, msalSetupComplete } from './auth'
-import { ApiError, apiRequest, createCommunityComment, createCommunityPost, getBookmarks, getCommunityPosts, getContributionSummary, getOpenReports, moderateResource, reportResource, resolveReport, toggleBookmark, toggleHelpful } from './lib/api'
-import type { Certification, CertificationInput, CommunityPost, CommunityPostKind, ContributionSummary, Resource, ResourceInput, ResourceKind, ResourceReport } from './lib/api'
+import { ApiError, apiRequest, createCommunityComment, createCommunityPost, getBookmarks, getCommunityPosts, getContributionSummary, getContributorLeaderboard, getOpenReports, moderateResource, reportResource, resolveReport, toggleBookmark, toggleHelpful } from './lib/api'
+import type { Certification, CertificationInput, CommunityPost, CommunityPostKind, ContributionSummary, ContributorCounts, ContributorLeaderboard, Resource, ResourceInput, ResourceKind, ResourceReport } from './lib/api'
 import './Portal.css'
 import './ProviderDirectory.css'
 import './Features.css'
@@ -63,7 +63,7 @@ function AuthenticatedPortal() {
   const [editing, setEditing] = useState<Certification | null>(null)
   const [addingResource, setAddingResource] = useState(false)
   const [savedOpen, setSavedOpen] = useState(false)
-  const [utilityView, setUtilityView] = useState<'community' | 'contributions' | null>(null)
+  const [utilityView, setUtilityView] = useState<'community' | 'contributions' | 'leaderboard' | null>(null)
   const [refresh, setRefresh] = useState(0)
 
   async function signIn() {
@@ -77,10 +77,10 @@ function AuthenticatedPortal() {
   function returnToList() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(null) }
   function done() { setEditing(null); setAddingResource(false); setRefresh((value) => value + 1) }
   function openSaved() { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(true); setUtilityView(null) }
-  function openUtility(view: 'community' | 'contributions') { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(view) }
+  function openUtility(view: 'community' | 'contributions' | 'leaderboard') { setSelected(null); setEditing(null); setAddingResource(false); setSavedOpen(false); setUtilityView(view) }
 
-  return <div className="app-shell"><aside className="sidebar"><Brand /><div className="sidebar-section-label">LIBRARY</div><button className={`nav-link ${!selected && !savedOpen && !utilityView ? 'active' : ''}`} onClick={returnToList}><BookOpen size={17} /> Browse certifications</button><button className={`nav-link ${savedOpen ? 'active' : ''}`} onClick={openSaved}><Bookmark size={17} /> Saved resources</button><div className="sidebar-section-label community-nav-label">COMMUNITY</div><button className={`nav-link ${utilityView === 'community' ? 'active' : ''}`} onClick={() => openUtility('community')}><MessagesSquare size={17} /> Ideas &amp; questions</button><button className={`nav-link ${utilityView === 'contributions' ? 'active' : ''}`} onClick={() => openUtility('contributions')}><Award size={17} /> My contributions</button><div className="sidebar-bottom"><div className="sidebar-note"><Sparkles size={15} /><span>{session.isLocal ? 'Local development mode' : 'Build your next skill path'}</span></div><button className="account-button" onClick={() => void session.signOut()}><span className="avatar">{session.displayName.slice(0, 1).toUpperCase()}</span><span className="account-details"><strong>{session.displayName}</strong><small>{session.isLocal ? 'Authentication disabled' : 'Signed in'}</small></span><LogOut size={15} /></button></div></aside>
-    <main className="main-area">{selected ? <DetailView key={`${selected.id}-${refresh}`} certification={selected} userId={session.userId} isAdmin={session.isAdmin} onBack={returnToList} onEdit={() => setEditing(selected)} onAddResource={() => setAddingResource(true)} onChanged={done} /> : savedOpen ? <SavedResources onBack={returnToList} /> : utilityView === 'community' ? <CommunityBoard /> : utilityView === 'contributions' ? <ContributionHistory /> : <Dashboard key={refresh} isAdmin={session.isAdmin} onOpen={openCertification} onCreate={() => setEditing({ id: '', provider: '', code: '', title: '', description: '', status: 'ACTIVE', examVersion: null, examUpdatedAt: null, topics: [], createdById: session.userId, createdByName: session.displayName, resources: [], resourceCount: 0, updatedAt: '' })} />}</main>
+  return <div className="app-shell"><aside className="sidebar"><Brand /><div className="sidebar-section-label">LIBRARY</div><button className={`nav-link ${!selected && !savedOpen && !utilityView ? 'active' : ''}`} onClick={returnToList}><BookOpen size={17} /> Browse certifications</button><button className={`nav-link ${savedOpen ? 'active' : ''}`} onClick={openSaved}><Bookmark size={17} /> Saved resources</button><div className="sidebar-section-label community-nav-label">COMMUNITY</div><button className={`nav-link ${utilityView === 'community' ? 'active' : ''}`} onClick={() => openUtility('community')}><MessagesSquare size={17} /> Ideas &amp; questions</button><button className={`nav-link ${utilityView === 'contributions' ? 'active' : ''}`} onClick={() => openUtility('contributions')}><Award size={17} /> My contributions</button><button className={`nav-link ${utilityView === 'leaderboard' ? 'active' : ''}`} onClick={() => openUtility('leaderboard')}><Trophy size={17} /> Leaderboard</button><div className="sidebar-bottom"><div className="sidebar-note"><Sparkles size={15} /><span>{session.isLocal ? 'Local development mode' : 'Build your next skill path'}</span></div><button className="account-button" onClick={() => void session.signOut()}><span className="avatar">{session.displayName.slice(0, 1).toUpperCase()}</span><span className="account-details"><strong>{session.displayName}</strong><small>{session.isLocal ? 'Authentication disabled' : 'Signed in'}</small></span><LogOut size={15} /></button></div></aside>
+    <main className="main-area">{selected ? <DetailView key={`${selected.id}-${refresh}`} certification={selected} userId={session.userId} isAdmin={session.isAdmin} onBack={returnToList} onEdit={() => setEditing(selected)} onAddResource={() => setAddingResource(true)} onChanged={done} /> : savedOpen ? <SavedResources onBack={returnToList} /> : utilityView === 'community' ? <CommunityBoard /> : utilityView === 'contributions' ? <ContributionHistory /> : utilityView === 'leaderboard' ? <ContributorDashboard /> : <Dashboard key={refresh} isAdmin={session.isAdmin} onOpen={openCertification} onCreate={() => setEditing({ id: '', provider: '', code: '', title: '', description: '', status: 'ACTIVE', examVersion: null, examUpdatedAt: null, topics: [], createdById: session.userId, createdByName: session.displayName, resources: [], resourceCount: 0, updatedAt: '' })} />}</main>
     {editing && <CertificationDialog existing={editing.id ? editing : undefined} onClose={() => setEditing(null)} onSaved={(item) => { setSelected(item); done() }} />}
     {addingResource && selected && <ResourceDialog certification={selected} onClose={() => setAddingResource(false)} onSaved={done} />}
   </div>
@@ -356,6 +356,51 @@ function ContributionHistory() {
         <h2>History</h2>
         {summary.activity.length ? <ol className="activity-list">{summary.activity.map((item) => <li key={item.id}><span className={`activity-kind ${item.kind}`}>{activityLabels[item.kind] ?? item.kind}</span><div><strong>{item.title}</strong><small>{item.detail}</small></div><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></li>)}</ol> : <div className="empty-state"><div className="empty-icon"><Award size={21} /></div><h3>No contributions yet</h3><p>Add a certification, share a resource, or post an idea to start your history.</p></div>}
       </section>
+    </>}
+  </div>
+}
+
+const contributionLabels: { key: keyof ContributorCounts; label: string }[] = [
+  { key: 'certifications', label: 'Certifications' },
+  { key: 'resources', label: 'Resources' },
+  { key: 'ideas', label: 'Ideas' },
+  { key: 'questions', label: 'Questions' },
+  { key: 'comments', label: 'Comments' },
+  { key: 'helpfulReceived', label: 'Helpful votes' },
+]
+
+function ContributorDashboard() {
+  const request = useApi()
+  const [board, setBoard] = useState<ContributorLeaderboard | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    getContributorLeaderboard(request).then((data) => { if (active) { setBoard(data); setError('') } }).catch((reason: unknown) => { if (active) setError(message(reason, 'Could not load the leaderboard.')) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [request])
+
+  const contributors = board?.contributors ?? []
+  const me = contributors.find((item) => item.isCurrentUser)
+
+  return <div className="page-content community-page">
+    <header className="topbar"><div><p className="breadcrumb">COMMUNITY <span>/</span> LEADERBOARD</p><h1>Contributor leaderboard</h1></div></header>
+    {error && <div className="alert error" role="alert">{error}</div>}
+    {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading the leaderboard</div> : board && <>
+      <div className="contribution-stats">
+        <div className="contribution-stat"><span className="contribution-stat-icon"><Users size={16} /></span><strong>{contributors.length}</strong><small>Ranked contributors</small></div>
+        <div className="contribution-stat"><span className="contribution-stat-icon"><Trophy size={16} /></span><strong>{contributors[0]?.score ?? 0}</strong><small>Top score</small></div>
+        <div className="contribution-stat"><span className="contribution-stat-icon"><Award size={16} /></span><strong>{me ? `#${me.rank}` : '–'}</strong><small>Your rank</small></div>
+        <div className="contribution-stat"><span className="contribution-stat-icon"><Sparkles size={16} /></span><strong>{me?.score ?? 0}</strong><small>Your score</small></div>
+      </div>
+      <p className="muted community-intro">Points: {contributionLabels.map((item) => `${item.label} x${board.weights[item.key]}`).join(' · ')}</p>
+      {contributors.length ? <ol className="leaderboard-list">{contributors.map((item) => <li key={item.userId} className={`leaderboard-row ${item.isCurrentUser ? 'is-me' : ''}`}>
+        <span className={`leaderboard-rank ${item.rank <= 3 ? `top-${item.rank}` : ''}`}>{item.rank}</span>
+        <span className="leaderboard-avatar">{item.displayName.slice(0, 1).toUpperCase()}</span>
+        <div className="leaderboard-name"><strong>{item.displayName}{item.isCurrentUser && <em>You</em>}</strong><div className="leaderboard-breakdown">{contributionLabels.filter((label) => item.counts[label.key] > 0).map((label) => <span key={label.key}>{item.counts[label.key]} {label.label.toLowerCase()}</span>)}</div></div>
+        <strong className="leaderboard-score">{item.score}<small>points</small></strong>
+      </li>)}</ol> : <div className="empty-state"><div className="empty-icon"><Trophy size={21} /></div><h3>No contributions yet</h3><p>Scores appear once people add certifications, share resources, post ideas or questions, comment, or receive helpful votes.</p></div>}
     </>}
   </div>
 }
