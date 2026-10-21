@@ -14,18 +14,22 @@ The MVP was a manual catalog: people upload PDFs and question sets, vote, and cl
 - **Intake** (`/intake`): describe your situation by text or voice dictation, or upload a resume, project description or offer (PDF, DOCX, TXT). The model returns ranked certification recommendations with reasons, prerequisites and prep estimates. "Start studying" opens the brief.
 - **Bring your own key** (`/settings`): each user stores their own OpenAI key, validated on save, AES-256-GCM encrypted at rest, never shown again. Research runs with the requesting user's key.
 - **Operations** (`/admin/ops`): summary tiles, stale briefs, job table with progress logs and cancel, "refresh all stale". A nightly scheduler refreshes stale briefs for followed certifications when a company server key is configured.
+- **Find anything**: search is typo tolerant, the four real Anthropic certifications are in the catalog, and when the catalog has no match the last row asks the agent to identify the certification from free text using web search, then opens its brief.
+- **My certifications**: its own page with Studying, Planning and Passed tabs and "Add one I already hold". Uploading a resume in intake extracts the certifications you already hold for one-tap saving, and they are excluded from recommendations.
 - **Legacy**: library, resources, saved, community board, contributions, leaderboard and review queue still work under "Community".
+- **Mobile**: below 900 px every page is one mission per screen with tabs under the title (brief: Checklist, Overview, Gaps, Resources, Sources; intake: one screen; admin: Summary, Stale, Jobs). Desktop layouts unchanged.
+- **Brand**: a sharp bracket-u mark on a 24-unit grid that doubles as the first letter of the wordmark; favicon and compact tile use the same glyph in green. Alternatives are viewable in dev at `/?brand=1`.
 - **Design pass**: DM Sans only, one token set under `client/src/styles/`, tighter density, single-column page grammar with one primary action per view, desktop sidebar plus a mobile top bar with a menu, accessible checkboxes and votes, per-route page titles. Screenshots at 1280 px and 390 px are in `docs/screenshots/`. Details in `docs/handoff/G.md`.
 
 ## Numbers
 
 | Item | Value |
 |---|---|
-| Commits on the branch | 8 |
-| Files changed vs main | about 150 (about 13k lines added) |
+| Commits on the branch | 14 |
+| Files changed vs main | about 210 (about 18k lines added) |
 | New API route modules | 6 (settings, catalog, briefs, jobs, intake, admin-ops) |
 | New services | research, intake, catalog, jobs, openai, ops, scheduler |
-| Catalog exams seeded | 84 across 16 providers |
+| Catalog exams seeded | 88 across 17 providers |
 | New database tables | 7, one migration |
 
 ## Verified
@@ -66,7 +70,7 @@ npm --prefix server run research -- --code AZ-104 --provider Microsoft --key sk-
 
 ## Branch state
 
-All work is on the local branch `ai-rework` in this worktree, eight commits ahead of `main`, not pushed. Each wave is its own commit so the history reads as the plan. Open a pull request from `ai-rework` to `main` when the team is ready.
+All work is on the local branch `ai-rework` in this worktree, fourteen commits ahead of `main`, not pushed. Each wave is its own commit so the history reads as the plan. Open a pull request from `ai-rework` to `main` when the team is ready.
 
 ## How to run
 
