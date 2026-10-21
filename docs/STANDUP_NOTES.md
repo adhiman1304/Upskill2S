@@ -9,7 +9,7 @@ The MVP was a manual catalog: people upload PDFs and question sets, vote, and cl
 ## What exists now
 
 - **Home**: one search box over an 84-exam seeded catalog plus anything already researched; retired codes alias to their successors (AZ-500 finds SC-500). "I don't know yet" leads to intake. "My certifications" shows what you follow with freshness.
-- **Study Brief** (`/certifications/:id`): freshness chip and age, exam facts, skills measured with weights, a 10 to 25 item checklist grouped by phase with per-user check-off, known gaps (what the official material does not cover, sourced from community posts), official learning path, community resources, numbered sources, accurate / inaccurate / outdated votes per item, follow status and target date, version history. Refresh runs the research agent in the background with a live progress log.
+- **Study Brief** (`/certifications/:id`): tabs Summary, Exam, Checklist, Gaps and Resources at every width; a clean hero with freshness and the official exam page; custom status and target-date controls; a 10 to 25 item checklist grouped by phase with per-user check-off and a highlighted next step; known gaps sourced from community posts; star to recommend and flag to report per item; a source icon per item opening its citations; version history. "Update brief" re-runs the research agent with a live progress log.
 - **Research pipeline**: OpenAI Responses API with the built-in web search tool. Four focused investigations run in parallel (official page, learning path, community gaps, third-party resources), then one strict-JSON structuring call into the brief contract, validation and one repair attempt, versioned persistence. Braindump domains are blocked. A CLI runs it from the terminal.
 - **Intake** (`/intake`): describe your situation by text or voice dictation, or upload a resume, project description or offer (PDF, DOCX, TXT). The model returns ranked certification recommendations with reasons, prerequisites and prep estimates. "Start studying" opens the brief.
 - **Bring your own key** (`/settings`): each user stores their own OpenAI key, validated on save, AES-256-GCM encrypted at rest, never shown again. Research runs with the requesting user's key.
@@ -25,7 +25,7 @@ The MVP was a manual catalog: people upload PDFs and question sets, vote, and cl
 
 | Item | Value |
 |---|---|
-| Commits on the branch | 14 |
+| Commits on the branch | 20 |
 | Files changed vs main | about 210 (about 18k lines added) |
 | New API route modules | 6 (settings, catalog, briefs, jobs, intake, admin-ops) |
 | New services | research, intake, catalog, jobs, openai, ops, scheduler |
@@ -70,7 +70,7 @@ npm --prefix server run research -- --code AZ-104 --provider Microsoft --key sk-
 
 ## Branch state
 
-All work is on the local branch `ai-rework` in this worktree, fourteen commits ahead of `main`, not pushed. Each wave is its own commit so the history reads as the plan. Open a pull request from `ai-rework` to `main` when the team is ready.
+All work is on the branch `ai-rework`, twenty commits ahead of `main`, each wave its own commit so the history reads as the plan. A pull request to `main` is open for review; `docs/TODO.md` lists the agreed next steps.
 
 ## How to run
 
