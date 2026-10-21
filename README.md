@@ -18,4 +18,6 @@ The frontend runs at `http://localhost:5173`; the API runs at `http://localhost:
 
 Question sets and PDFs require confirmation that the contributor created the material or has permission to share it. Add source attribution where applicable. Do not upload copied exam questions or restricted content. PDF files are stored outside the public frontend directory and are delivered only through an authenticated API route.
 
+Resource cards (including saved resources) and resource details display quality signals: the last administrator review date, source attribution with a link when supplied, and the number of helpful votes received. Resources without a review or attribution are explicitly labeled. Review dates indicate when an administrator marked a resource reviewed, not a guarantee that its content is current or accurate. Helpful votes represent community feedback, not verification.
+
 The first version uses local SQLite and local PDF storage. For a multi-instance deployment, move the database and file storage to shared hosted services and configure company identity and admin IDs before deployment.
