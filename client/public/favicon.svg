@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
   <title>Upskill</title>
+  <!-- Round 2 mark: bracket u on a 3-unit module, tile radius 3. Every glyph edge is a multiple of 3 units. -->
   <style>
     .tile { fill: #3b5a2a; }
-    .glyph { fill: none; stroke: #ffffff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .glyph { fill: #ffffff; }
     @media (prefers-color-scheme: dark) {
       .tile { fill: #86a36b; }
-      .glyph { stroke: #1d211c; }
+      .glyph { fill: #1d211c; }
     }
   </style>
-  <rect class="tile" width="24" height="24" rx="6"/>
-  <path class="glyph" d="M6.5 9V13.5a4 4 0 0 0 8 0V6"/>
-  <path class="glyph" d="M11.5 9 14.5 6 17.5 9"/>
+  <rect class="tile" width="24" height="24" rx="3"/>
+  <path class="glyph" shape-rendering="crispEdges" d="M6 9H9V15H15V6H18V18H6Z"/>
 </svg>

@@ -1,16 +1,17 @@
-/* Brand lockup: mark + wordmark. Sizes are set with --brand-mark and --brand-text. */
+/* Brand: the logotype (bracket-u + "pskill") or, when compact, the tiled mark.
+   --brand-text sizes the logotype, --brand-mark the compact mark. */
 .brand.brand-lockup {
   --brand-mark: 28px;
-  --brand-text: 20px;
-  display: inline-flex; align-items: center; gap: calc(var(--brand-mark) * 0.32);
+  --brand-text: 24px;
+  display: inline-flex; align-items: center;
   color: var(--color-text); font-size: var(--brand-text); line-height: 1; text-decoration: none;
 }
-.brand.brand-sm { --brand-mark: 22px; --brand-text: 17px; }
-.brand.brand-md { --brand-mark: 28px; --brand-text: 20px; }
-.brand.brand-lg { --brand-mark: 36px; --brand-text: 26px; }
+.brand.brand-sm { --brand-mark: 22px; --brand-text: 18px; }
+.brand.brand-md { --brand-mark: 28px; --brand-text: 24px; }
+.brand.brand-lg { --brand-mark: 36px; --brand-text: 32px; }
 
-/* Sign-in and setup screens render the default <Brand />; give them the large lockup. */
-.login-copy > .brand.brand-lockup, .setup-panel > .brand.brand-lockup { --brand-mark: 36px; --brand-text: 26px; }
+/* Sign-in and setup screens render the default <Brand />; give them the large size. */
+.login-copy > .brand.brand-lockup, .setup-panel > .brand.brand-lockup { --brand-mark: 36px; --brand-text: 32px; }
 .setup-panel > .brand.brand-lockup { justify-self: start; }
 
 .brand-lockup .logo-mark { width: var(--brand-mark); height: var(--brand-mark); flex: none; display: block; }
@@ -18,14 +19,15 @@
 .wordmark {
   display: inline-block; font-family: var(--font); font-weight: var(--weight-heading);
   letter-spacing: -0.02em; line-height: 1; white-space: nowrap; color: inherit;
-  /* Optical: lowercase sits low; nudge so the x-height centres on the mark. */
-  transform: translateY(-0.04em);
 }
-.wordmark-i { position: relative; display: inline-block; }
-.wordmark-i-dot { color: var(--color-accent); }
-.wordmark-i-stem { position: absolute; left: 0; top: 0; color: inherit; }
+/* The bracket u: DM Sans 600 u advance (0.604 em) and the rising stem's height
+   (0.673 em), bottom on the baseline. The margin applies the -0.02 em tracking
+   the letter it replaces would have had. */
+.wordmark-u {
+  display: inline-block; width: 0.604em; height: 0.673em; vertical-align: baseline;
+  margin-right: -0.02em; overflow: visible;
+}
 
 @media (max-width: 899px) {
-  .mobile-bar > .brand.brand-lockup:not(.brand-lg) { --brand-mark: 24px; --brand-text: 18px; }
+  .mobile-bar > .brand.brand-lockup:not(.brand-lg) { --brand-mark: 24px; --brand-text: 20px; }
 }
-

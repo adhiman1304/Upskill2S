@@ -1,4 +1,4 @@
-import { MARK_GLYPH_PATHS } from './geometry'
+import { MARK_GLYPH_PATHS, MARK_TILE_RADIUS } from './geometry'
 
 type LogoMarkProps = {
   /** Rendered width and height in px. */
@@ -15,8 +15,9 @@ export function LogoMark({ size = 28, tone = 'accent', className, title }: LogoM
   const ink = tone === 'accent' ? 'var(--color-surface)' : tone === 'inverse' ? 'var(--color-accent)' : 'currentColor'
   const labelled = Boolean(title)
   return <svg className={['logo-mark', className].filter(Boolean).join(' ')} width={size} height={size} viewBox="0 0 24 24" role={labelled ? 'img' : undefined} aria-label={title} aria-hidden={labelled ? undefined : true} focusable="false">
-    {tone !== 'glyph' && <rect width="24" height="24" rx="6" fill={tile} />}
-    <g fill="none" stroke={ink} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    {tone !== 'glyph' && <rect width="24" height="24" rx={MARK_TILE_RADIUS} fill={tile} />}
+    {/* Every glyph edge sits on the 3-unit module, so crispEdges snaps it without distortion. */}
+    <g fill={ink} shapeRendering="crispEdges">
       {MARK_GLYPH_PATHS.map((d) => <path key={d} d={d} />)}
     </g>
   </svg>

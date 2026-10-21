@@ -10,18 +10,21 @@ const showExplorations = Boolean(BrandExplorations) && typeof location !== 'unde
 export type BrandSize = 'sm' | 'md' | 'lg'
 
 type BrandProps = {
-  /** sm: 22 px mark, md: 28 px mark (default), lg: 36 px mark. */
+  /** Logotype size. sm: 18 px, md: 24 px (default), lg: 32 px. Compact mark: 22, 28, 36 px. */
   size?: BrandSize
-  /** Mark only, no wordmark. The mark then carries the accessible name. */
+  /** Tiled mark only, no logotype. The mark then carries the accessible name. */
   compact?: boolean
   className?: string
 }
 
+/**
+ * Full brand: the logotype, where the bracket-u mark is the "u" of "upskill".
+ * Compact: the green tiled mark (favicon style).
+ */
 export function Brand({ size = 'md', compact = false, className }: BrandProps) {
   const classes = ['brand', 'brand-lockup', `brand-${size}`, compact ? 'brand-compact' : '', className ?? ''].filter(Boolean).join(' ')
   return <div className={classes}>
-    <LogoMark title={compact ? 'Upskill' : undefined} />
-    {!compact && <Wordmark />}
+    {compact ? <LogoMark title="Upskill" /> : <Wordmark />}
     {showExplorations && BrandExplorations && createPortal(<div className="brand-explorations-overlay"><Suspense fallback={null}><BrandExplorations /></Suspense></div>, document.body)}
   </div>
 }

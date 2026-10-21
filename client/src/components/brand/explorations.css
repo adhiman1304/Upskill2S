@@ -8,3 +8,12 @@
 .brand-explorations-overlay { position: fixed; z-index: 100; inset: 0; overflow-y: auto; background: var(--color-bg); color: var(--color-text); font-size: var(--text-base); line-height: var(--leading); }
 /* Every Brand instance portals the gallery; show only the first. */
 .brand-explorations-overlay ~ .brand-explorations-overlay { display: none; }
+.brand-exploration.is-chosen strong { color: var(--color-accent); }
+.brand-exploration-render { gap: var(--space-3); flex-wrap: wrap; }
+.brand-exploration-render > span { display: inline-flex; align-items: center; gap: 6px; }
+.brand-exploration-render small { color: var(--color-text-subtle); font-size: 12px; }
+.brand-exploration-lockup { display: inline-flex; align-items: center; gap: 9px; }
+.brand-exploration-type { display: grid; gap: var(--space-3); }
+.brand-exploration-type > div { display: flex; align-items: baseline; gap: var(--space-5); color: var(--color-text); }
+.brand-exploration-plain { color: var(--color-text-subtle); }
+.brand-exploration-wide { grid-template-columns: 1fr; }
