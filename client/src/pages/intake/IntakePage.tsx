@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CircleAlert, Clock, FileText, KeyRound, LoaderCircle, Mic, MicOff, Paperclip, Sparkles, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CircleAlert, Clock, FileText, LoaderCircle, Mic, MicOff, Paperclip, Sparkles, X } from 'lucide-react'
+import { KeyRequiredCallout } from '../../components/ui/KeyRequiredCallout'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useIsMobile } from '../../hooks/useMediaQuery'
 import { useSpeechDictation } from '../../hooks/useSpeechDictation'
@@ -120,11 +121,7 @@ export function IntakePage() {
 
   const header = <header className="page-header"><div><h1>Help me choose a certification</h1><p className="page-desc">Tell us where you are and where you want to go. Type, dictate, or attach a resume, project description or job offer, and we will suggest certifications that fit.</p></div></header>
 
-  const keyCallout = keyMissing && <div className="alert warning intake-callout" role="alert">
-    <KeyRound size={16} aria-hidden="true" />
-    <div><strong>Add your OpenAI API key first.</strong><p>Recommendations run with your own OpenAI key. Add it in Settings, then submit again. Your text and files are still here.</p></div>
-    <Link className="button button-secondary button-small" to="/settings">Open settings</Link>
-  </div>
+  const keyCallout = keyMissing && <KeyRequiredCallout className="intake-callout">Recommendations run with your own OpenAI key. Add it in Settings, then submit again. Your text and files are still here.</KeyRequiredCallout>
 
   const followUpHint = followUps.length > 0 && <div className="alert intake-followups-hint">
     <strong>Answer these to refine your results</strong>

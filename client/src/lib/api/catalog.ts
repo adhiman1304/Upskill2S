@@ -1,5 +1,5 @@
 import type { AuthenticatedRequest } from './client'
-import type { CatalogHitDto } from '../contracts'
+import type { CatalogHitDto, IdentifyResult } from '../contracts'
 
 export interface ResolveCertificationInput { provider: string; code: string; title: string; officialUrl?: string | null }
 
@@ -11,4 +11,10 @@ export function searchCatalog(request: AuthenticatedRequest, query: string, init
 /** POST /api/catalog/resolve: find-or-create by provider + code. */
 export function resolveCertification(request: AuthenticatedRequest, input: ResolveCertificationInput) {
   return request<{ id: string }>('/api/catalog/resolve', { method: 'POST', body: JSON.stringify(input) })
+}
+
+/** POST /api/catalog/identify: asks the agent to identify a certification from free text (3 to 200 chars). Can take up to a minute.
+ * Errors: 412 OPENAI_KEY_MISSING, 429 RATE_LIMITED, 400 bad query. */
+export function identifyCertification(request: AuthenticatedRequest, query: string, init?: RequestInit) {
+  return request<IdentifyResult>('/api/catalog/identify', { ...init, method: 'POST', body: JSON.stringify({ query: query.trim().slice(0, 200) }) })
 }
