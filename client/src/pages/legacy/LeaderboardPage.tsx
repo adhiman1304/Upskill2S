@@ -5,6 +5,7 @@ import type { ContributorCounts, ContributorLeaderboard } from '../../lib/api'
 import { useApi } from '../../session'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 import { message } from './utils'
 
 const contributionLabels: { key: keyof ContributorCounts; label: string }[] = [
@@ -16,8 +17,8 @@ const contributionLabels: { key: keyof ContributorCounts; label: string }[] = [
   { key: 'helpfulReceived', label: 'Helpful votes' },
 ]
 
-export function LeaderboardPage() {
-  useDocumentTitle('Leaderboard')
+export function LeaderboardPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('Leaderboard', !embedded)
   const request = useApi()
   const [board, setBoard] = useState<ContributorLeaderboard | null>(null)
   const [loading, setLoading] = useState(true)
@@ -32,8 +33,8 @@ export function LeaderboardPage() {
   const contributors = board?.contributors ?? []
   const me = contributors.find((item) => item.isCurrentUser)
 
-  return <div className="page-content community-page">
-    <header className="page-header"><div><h1>Contributor leaderboard</h1><p className="page-desc">Earn points for every contribution and helpful vote.</p></div></header>
+  return <PageFrame embedded={embedded} className="community-page">
+    <PageHeading embedded={embedded} title="Contributor leaderboard" description="Earn points for every contribution and helpful vote." />
     {error && <div className="alert error" role="alert">{error}</div>}
     {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading the leaderboard</div> : board && <>
       <div className="contribution-stats">
@@ -53,5 +54,5 @@ export function LeaderboardPage() {
         <strong className="leaderboard-score">{item.score}<small>points</small></strong>
       </li>)}</ol> : <div className="empty-state"><Trophy className="empty-icon" size={20} aria-hidden="true" /><h3>No contributions yet</h3><p>Scores appear once people add certifications, share resources, post ideas or questions, comment, or receive helpful votes.</p></div>}
     </>}
-  </div>
+  </PageFrame>
 }

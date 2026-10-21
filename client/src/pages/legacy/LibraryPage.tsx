@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, BookOpen, LoaderCircle, Plus } from 'lucide-react'
 import type { Certification } from '../../lib/api'
 import { useApi, useSession } from '../../session'
@@ -9,8 +9,9 @@ import { CertificationDialog } from './components'
 import { ProviderLogo, featuredProviders, providerLogoDomains } from './providers'
 import { formatDate, labels, message } from './utils'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 
-export function LibraryPage() {
+export function LibraryPage({ embedded = false }: { embedded?: boolean }) {
   const request = useApi()
   const { isAdmin } = useSession()
   const navigate = useNavigate()
@@ -20,7 +21,15 @@ export function LibraryPage() {
   const [listResult, setListResult] = useState<{ key: string; items: Certification[]; error: string }>({ key: '', items: [], error: '' })
   const [providerItems, setProviderItems] = useState<Certification[]>([])
   const [search, setSearch] = useState('')
-  const [provider, setProvider] = useState('')
+  // The selected provider lives in `?provider=` so the certification page's back link can return to it.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const provider = searchParams.get('provider') ?? ''
+  const setProvider = (name: string) => setSearchParams((current) => {
+    const next = new URLSearchParams(current)
+    if (name) next.set('provider', name)
+    else next.delete('provider')
+    return next
+  })
   const [resourceType, setResourceType] = useState('')
   const [topic, setTopic] = useState('')
   const [status, setStatus] = useState('')
@@ -84,13 +93,10 @@ export function LibraryPage() {
     setStatus('')
   }
   const selectedProvider = providerStats.find((item) => item.name === provider)
-  useDocumentTitle(provider ? `Library: ${provider}` : 'Library')
-  return <div className="page-content library-page">
+  useDocumentTitle(provider ? `Library: ${provider}` : 'Library', !embedded)
+  return <PageFrame embedded={embedded} className="library-page">
     {provider && <button className="back-link" onClick={backToProviders}><ArrowLeft size={16} /> All providers</button>}
-    <header className="page-header">
-      <div><h1>{provider || 'Community library'}</h1><p className="page-desc">{provider ? `${selectedProvider?.certifications ?? 0} ${selectedProvider?.certifications === 1 ? 'certification' : 'certifications'}. Choose one to view its study resources.` : 'Notes, question sets and links shared by colleagues, by provider.'}</p></div>
-      <button className="button button-primary" onClick={onCreate}><Plus size={16} /> New certification</button>
-    </header>
+    <PageHeading embedded={embedded} title={provider || 'Community library'} description={provider ? `${selectedProvider?.certifications ?? 0} ${selectedProvider?.certifications === 1 ? 'certification' : 'certifications'}. Choose one to view its study resources.` : 'Notes, question sets and links shared by colleagues, by provider.'} action={<button className="button button-primary" onClick={onCreate}><Plus size={16} /> New certification</button>} />
     {!provider ? <section className="provider-directory" aria-label="Providers">
       <div className="section-heading"><div><h2>Providers</h2></div><span className="result-count">{providerLoading ? 'Loading' : `${providerDirectory.length} providers`}</span></div>
       {providerError && <div className="alert error" role="alert">{providerError}</div>}
@@ -103,5 +109,5 @@ export function LibraryPage() {
       {isAdmin && <AdminReviewPanel />}
     </>}
     {creating && <CertificationDialog onClose={() => setCreating(false)} onSaved={(item) => { setCreating(false); onOpen(item) }} />}
-  </div>
+  </PageFrame>
 }

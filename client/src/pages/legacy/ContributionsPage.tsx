@@ -5,12 +5,13 @@ import type { ContributionSummary } from '../../lib/api'
 import { useApi } from '../../session'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 import { formatDate, message } from './utils'
 
 const activityLabels: Record<string, string> = { certification: 'Certification', resource: 'Resource', idea: 'Idea', question: 'Question', comment: 'Comment' }
 
-export function ContributionsPage() {
-  useDocumentTitle('My contributions')
+export function ContributionsPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('My contributions', !embedded)
   const request = useApi()
   const [summary, setSummary] = useState<ContributionSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -31,8 +32,8 @@ export function ContributionsPage() {
     { label: 'Helpful votes received', value: summary.counts.helpfulReceived },
   ] : []
 
-  return <div className="page-content community-page">
-    <header className="page-header"><div><h1>My contributions</h1><p className="page-desc">What you have added to the library and community.</p></div></header>
+  return <PageFrame embedded={embedded} className="community-page">
+    <PageHeading embedded={embedded} title="My contributions" description="What you have added to the library and community." />
     {error && <div className="alert error" role="alert">{error}</div>}
     {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading your contributions</div> : summary && <>
       <div className="contribution-stats">
@@ -47,5 +48,5 @@ export function ContributionsPage() {
         {summary.activity.length ? <ol className="list activity-list">{summary.activity.map((item) => <li key={item.id}><span className="chip activity-kind">{activityLabels[item.kind] ?? item.kind}</span><div><strong>{item.title}</strong><small>{item.detail}</small></div><time dateTime={item.createdAt}>{formatDate(item.createdAt)}</time></li>)}</ol> : <div className="empty-state"><Award className="empty-icon" size={20} aria-hidden="true" /><h3>No contributions yet</h3><p>Add a certification, share a resource, or post an idea to start your history.</p></div>}
       </section>
     </>}
-  </div>
+  </PageFrame>
 }

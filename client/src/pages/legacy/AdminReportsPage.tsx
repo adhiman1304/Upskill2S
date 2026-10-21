@@ -5,11 +5,12 @@ import type { Resource, ResourceReport } from '../../lib/api'
 import { useApi } from '../../session'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 import { formatDate, message } from './utils'
 
-export function AdminReportsPage() {
-  useDocumentTitle('Review queue')
-  return <div className="page-content"><header className="page-header"><div><h1>Review queue</h1><p className="page-desc">Review reports, mark checked resources, or hide material from the shared library.</p></div></header><AdminReviewPanel /></div>
+export function AdminReportsPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('Review queue', !embedded)
+  return <PageFrame embedded={embedded}><PageHeading embedded={embedded} title="Review queue" description="Review reports, mark checked resources, or hide material from the shared library." /><AdminReviewPanel /></PageFrame>
 }
 
 export function AdminReviewPanel() {

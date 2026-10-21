@@ -1,8 +1,11 @@
 import { useEffect } from 'react'
 
-/** Sets `document.title` to "<title> | Upskill" while the calling page is mounted. */
-export function useDocumentTitle(title: string | null | undefined) {
-  useEffect(() => { document.title = title ? `${title} | Upskill` : 'Upskill' }, [title])
+/**
+ * Sets `document.title` to "<title> | Upskill" while the calling page is mounted.
+ * Pass `enabled = false` when the page is embedded in a hub that owns the title.
+ */
+export function useDocumentTitle(title: string | null | undefined, enabled = true) {
+  useEffect(() => { if (enabled) document.title = title ? `${title} | Upskill` : 'Upskill' }, [title, enabled])
 }
 
 /** Short page name for the mobile top bar, derived from the path. */
@@ -13,13 +16,8 @@ export function routeTitle(pathname: string) {
   if (pathname.startsWith('/certifications/')) return 'Study brief'
   if (pathname === '/my-certifications') return 'My certifications'
   if (pathname === '/settings') return 'Settings'
-  if (pathname === '/library') return 'Library'
+  if (pathname === '/community') return 'Community'
   if (pathname.startsWith('/library/')) return 'Library'
-  if (pathname === '/saved') return 'Saved resources'
-  if (pathname === '/community') return 'Ideas & questions'
-  if (pathname === '/contributions') return 'My contributions'
-  if (pathname === '/leaderboard') return 'Leaderboard'
-  if (pathname === '/admin/reports') return 'Review queue'
-  if (pathname === '/admin/ops') return 'Operations'
+  if (pathname === '/admin') return 'Admin'
   return ''
 }

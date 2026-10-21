@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
 import { SessionProvider, useSession } from './session'
 import { useDocumentTitle } from './hooks/useDocumentTitle'
@@ -11,14 +11,9 @@ import { IntakeResultPage } from './pages/intake/IntakeResultPage'
 import { BriefPage } from './pages/brief/BriefPage'
 import { MyCertificationsPage } from './pages/my/MyCertificationsPage'
 import { SettingsPage } from './pages/settings/SettingsPage'
-import { AdminOpsPage } from './pages/admin/AdminOpsPage'
-import { LibraryPage } from './pages/legacy/LibraryPage'
+import { AdminHubPage } from './pages/admin/AdminHubPage'
+import { CommunityHubPage } from './pages/community/CommunityHubPage'
 import { CertificationDetailPage } from './pages/legacy/CertificationDetailPage'
-import { SavedResourcesPage } from './pages/legacy/SavedResourcesPage'
-import { CommunityPage } from './pages/legacy/CommunityPage'
-import { ContributionsPage } from './pages/legacy/ContributionsPage'
-import { LeaderboardPage } from './pages/legacy/LeaderboardPage'
-import { AdminReportsPage } from './pages/legacy/AdminReportsPage'
 
 export default function Portal() {
   return <BrowserRouter><SessionProvider><Routes>
@@ -29,17 +24,27 @@ export default function Portal() {
       <Route path="certifications/:id" element={<BriefPage />} />
       <Route path="my-certifications" element={<MyCertificationsPage />} />
       <Route path="settings" element={<SettingsPage />} />
-      <Route path="library" element={<LibraryPage />} />
+      <Route path="community" element={<CommunityHubPage />} />
       <Route path="library/:id" element={<CertificationDetailPage />} />
-      <Route path="saved" element={<SavedResourcesPage />} />
-      <Route path="community" element={<CommunityPage />} />
-      <Route path="contributions" element={<ContributionsPage />} />
-      <Route path="leaderboard" element={<LeaderboardPage />} />
-      <Route path="admin/reports" element={<RequireAdmin><AdminReportsPage /></RequireAdmin>} />
-      <Route path="admin/ops" element={<RequireAdmin><AdminOpsPage /></RequireAdmin>} />
+      <Route path="admin" element={<RequireAdmin><AdminHubPage /></RequireAdmin>} />
+      {/* Older standalone pages now live as hub tabs. */}
+      <Route path="library" element={<RedirectToTab to="/community" tab="library" />} />
+      <Route path="saved" element={<RedirectToTab to="/community" tab="saved" />} />
+      <Route path="contributions" element={<RedirectToTab to="/community" tab="contributions" />} />
+      <Route path="leaderboard" element={<RedirectToTab to="/community" tab="leaderboard" />} />
+      <Route path="admin/ops" element={<RedirectToTab to="/admin" tab="operations" />} />
+      <Route path="admin/reports" element={<RedirectToTab to="/admin" tab="review" />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Route>
   </Routes></SessionProvider></BrowserRouter>
+}
+
+/** Redirects an old route to a hub tab, keeping any other search params (for example `?provider=`). */
+function RedirectToTab({ to, tab }: { to: string; tab: string }) {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  params.set('tab', tab)
+  return <Navigate to={`${to}?${params.toString()}`} replace />
 }
 
 function RequireAuth({ children }: { children: ReactNode }) {

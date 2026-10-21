@@ -5,10 +5,11 @@ import type { CommunityPost, CommunityPostKind } from '../../lib/api'
 import { useApi } from '../../session'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 import { formatDate, message } from './utils'
 
-export function CommunityPage() {
-  useDocumentTitle('Ideas & questions')
+export function CommunityPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('Ideas & questions', !embedded)
   const request = useApi()
   const [posts, setPosts] = useState<CommunityPost[]>([])
   const [filter, setFilter] = useState<'ALL' | CommunityPostKind>('ALL')
@@ -66,8 +67,8 @@ export function CommunityPage() {
     { value: 'QUESTION', label: 'Questions', count: questionCount },
   ]
 
-  return <div className="page-content community-page">
-    <header className="page-header"><div><h1>Ideas &amp; questions</h1><p className="page-desc">Suggest an improvement or ask the community for help. Anyone signed in can reply.</p></div></header>
+  return <PageFrame embedded={embedded} className="community-page">
+    <PageHeading embedded={embedded} title={embedded ? 'Ideas & feedback' : 'Ideas & questions'} description={embedded ? 'Suggest an improvement, give feedback or ask the community for help. Anyone signed in can reply.' : 'Suggest an improvement or ask the community for help. Anyone signed in can reply.'} />
     {error && <div className="alert error" role="alert">{error}</div>}
     <form className="community-composer card" onSubmit={(event) => void submitPost(event)}>
       <div className="segmented" role="group" aria-label="Post type">
@@ -100,5 +101,5 @@ export function CommunityPage() {
         </article>
       })}
     </div> : <div className="empty-state"><MessagesSquare className="empty-icon" size={20} aria-hidden="true" /><h3>No {filter === 'ALL' ? 'ideas or questions' : filter === 'IDEA' ? 'ideas' : 'questions'} yet</h3><p>Start the conversation. Ideas shape the library; questions get answered by the community.</p></div>}
-  </div>
+  </PageFrame>
 }

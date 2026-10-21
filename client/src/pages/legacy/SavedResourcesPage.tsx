@@ -6,14 +6,15 @@ import type { Resource } from '../../lib/api'
 import { useApi } from '../../session'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './legacy.css'
+import { PageFrame, PageHeading } from './embed'
 import { ResourceCard, ResourceDetailDialog } from './components'
 import { message } from './utils'
 
-export function SavedResourcesPage() {
-  useDocumentTitle('Saved resources')
+export function SavedResourcesPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('Saved resources', !embedded)
   const request = useApi()
   const navigate = useNavigate()
-  const onBack = () => navigate('/library')
+  const onBack = () => navigate('/community?tab=library')
   const [items, setItems] = useState<Resource[]>([])
   const [active, setActive] = useState<Resource | null>(null)
   const [error, setError] = useState('')
@@ -40,5 +41,5 @@ export function SavedResourcesPage() {
     try { const result = await toggleHelpful(request, resource.id); setItems((current) => current.map((item) => item.id === resource.id ? { ...item, isHelpful: result.helpful, helpfulCount: result.helpfulCount } : item)) }
     catch (reason) { setError(message(reason, 'Could not record feedback.')) }
   }
-  return <div className="page-content"><button className="back-link" onClick={onBack}><ArrowLeft size={16} /> Certification library</button><header className="page-header"><div><h1>Saved resources</h1><p className="page-desc">Material you saved from the community library.</p></div></header>{error && <div className="alert error">{error}</div>}{loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading saved resources</div> : items.length ? <div className="resource-grid">{items.map((resource) => <div key={resource.id}><p className="saved-certification">{resource.certification?.provider} · {resource.certification?.code}</p><ResourceCard resource={resource} canEdit={false} onOpen={() => setActive(resource)} onDelete={() => {}} onDownload={() => void download(resource)} onBookmark={() => void removeBookmark(resource)} onHelpful={() => void helpful(resource)} /></div>)}</div> : <div className="empty-state"><Bookmark className="empty-icon" size={20} aria-hidden="true" /><h3>No saved resources</h3><p>Save useful material from a resource detail view to find it here later.</p></div>}{active && <ResourceDetailDialog resource={active} onClose={() => setActive(null)} onDownload={() => void download(active)} onChanged={() => void refresh()} />}</div>
+  return <PageFrame embedded={embedded}>{!embedded && <button className="back-link" onClick={onBack}><ArrowLeft size={16} /> Certification library</button>}<PageHeading embedded={embedded} title="Saved resources" description="Material you saved from the community library." />{error && <div className="alert error">{error}</div>}{loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading saved resources</div> : items.length ? <div className="resource-grid">{items.map((resource) => <div key={resource.id}><p className="saved-certification">{resource.certification?.provider} · {resource.certification?.code}</p><ResourceCard resource={resource} canEdit={false} onOpen={() => setActive(resource)} onDelete={() => {}} onDownload={() => void download(resource)} onBookmark={() => void removeBookmark(resource)} onHelpful={() => void helpful(resource)} /></div>)}</div> : <div className="empty-state"><Bookmark className="empty-icon" size={20} aria-hidden="true" /><h3>No saved resources</h3><p>Save useful material from a resource detail view to find it here later.</p></div>}{active && <ResourceDetailDialog resource={active} onClose={() => setActive(null)} onDownload={() => void download(active)} onChanged={() => void refresh()} />}</PageFrame>
 }

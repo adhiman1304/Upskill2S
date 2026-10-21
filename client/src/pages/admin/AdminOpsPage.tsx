@@ -10,6 +10,7 @@ import { JobsTable } from './JobsTable'
 import { SchedulerCard } from './SchedulerCard'
 import { StaleTable } from './StaleTable'
 import { SummaryTiles } from './SummaryTiles'
+import { PageFrame, PageHeading } from '../legacy/embed'
 import './admin-ops.css'
 
 function errorText(error: unknown, fallback: string) {
@@ -26,8 +27,8 @@ function describeRefresh(result: RefreshStaleResult) {
   return parts.join(' ')
 }
 
-export function AdminOpsPage() {
-  useDocumentTitle('Operations')
+export function AdminOpsPage({ embedded = false }: { embedded?: boolean }) {
+  useDocumentTitle('Operations', !embedded)
   const request = useApi()
   const mobile = useIsMobile()
   const [status, setStatus] = useState<JobStatus | ''>('')
@@ -95,12 +96,13 @@ export function AdminOpsPage() {
     await reloadAll()
   }
 
-  return <div className="page-content ops-page">
-    <header className="page-header"><div><h1>Operations</h1><p className="page-desc">Research jobs, brief freshness and the nightly refresh.</p></div></header>
+  return <PageFrame embedded={embedded} className="ops-page">
+    <PageHeading embedded={embedded} title="Operations" description="Research jobs, brief freshness and the nightly refresh." />
     {summary.error && <div className="alert error">{errorText(summary.error, 'Could not load the operations summary.')}</div>}
     {notice && <div className={`alert ${notice.tone === 'error' ? 'error' : 'success'}`} role="status"><span>{notice.text}</span><button className="icon-button ops-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss">×</button></div>}
     {/* Mobile: Summary | Stale | Jobs tabs. Desktop: the same panels stacked in this order. */}
-    <Tabs mode={mobile ? 'tabs' : 'stacked'} label="Operations sections" tabs={[
+    {/* Inside the Admin hub, `?tab=` belongs to the hub, so these tabs use `?section=`. */}
+    <Tabs mode={mobile ? 'tabs' : 'stacked'} label="Operations sections" param={embedded ? 'section' : 'tab'} tabs={[
       { id: 'summary', label: 'Summary', content: <>
         <SummaryTiles summary={summary.data} />
         <SchedulerCard scheduler={scheduler} blockedReason={blockedReason} refreshing={refreshingAll} onRefreshAll={() => void refreshAll()} onlyFollowed={onlyFollowed} />
@@ -111,5 +113,5 @@ export function AdminOpsPage() {
       </> },
       { id: 'jobs', label: 'Jobs', content: <JobsTable jobs={jobs.data} error={jobs.error ? errorText(jobs.error, 'Could not load jobs.') : null} status={status} kind={kind} onStatus={setStatus} onKind={setKind} cancellingId={cancellingId} onCancel={(job) => void cancel(job)} /> },
     ]} />
-  </div>
+  </PageFrame>
 }
