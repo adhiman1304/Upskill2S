@@ -18,7 +18,7 @@ function HowItWorks() {
     <ol className="home-steps">
       <li><strong>Search.</strong> Find your exam by code or name, or describe your goals and get a recommendation.</li>
       <li><strong>The agent researches.</strong> It reads the official exam page, learning path and community discussion, and cites every source.</li>
-      <li><strong>Follow a cited checklist.</strong> Work through the study checklist, track progress, and flag anything inaccurate or outdated.</li>
+      <li><strong>Follow a cited checklist.</strong> Work through the study checklist, track progress, star what helped and report anything wrong.</li>
     </ol>
     <p className="home-library-note">Looking for notes and question sets shared by colleagues? <Link to="/library">Community library</Link></p>
   </>

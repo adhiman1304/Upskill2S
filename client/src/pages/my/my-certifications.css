@@ -12,7 +12,7 @@
 .my-cert-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--space-2); margin-top: 2px; }
 .my-cert-meta small { color: var(--color-text-subtle); font-size: var(--text-sm); }
 .my-cert-actions { display: flex; align-items: center; gap: var(--space-1); flex: 0 0 auto; }
-.my-cert-select { width: auto; min-height: 36px; padding-top: 0; padding-bottom: 0; font-size: var(--text-sm); }
+.my-cert-select { width: 124px; }
 .my-cert-confirm { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text-muted); font-size: var(--text-sm); }
 .my-certs-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
 
@@ -38,7 +38,7 @@
   .my-cert-row { flex-wrap: wrap; row-gap: var(--space-2); }
   .my-cert-main { flex-basis: 100%; }
   .my-cert-actions { width: 100%; padding-left: 44px; }
-  .my-cert-select { flex: 1; }
+  .my-cert-select { flex: 1; width: auto; }
   .my-cert-confirm { flex-wrap: wrap; justify-content: flex-end; }
   .my-certs-manual .form-grid { grid-template-columns: 1fr; }
 }

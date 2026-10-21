@@ -1,14 +1,16 @@
 import { createContext, useContext } from 'react'
-import type { BriefPageDto, BriefSource } from '../../lib/contracts'
-import type { FeedbackItemType, FeedbackVerdict } from '../../lib/contracts'
+import type { BriefPageDto, BriefSource, FeedbackItemType, FeedbackReportReason } from '../../lib/contracts'
 
 export interface BriefViewContextValue {
   sources: Map<string, { n: number; source: BriefSource }>
   feedback: BriefPageDto['feedback']
-  /** True when viewing an older version: no votes, no check-off. */
+  /** True when viewing an older version: no star or report, no check-off. */
   readOnly: boolean
   pendingVotes: ReadonlySet<string>
-  onVote: (itemType: FeedbackItemType, itemId: string, verdict: FeedbackVerdict) => void
+  /** Toggles the user's star on an item. */
+  onStar: (itemType: FeedbackItemType, itemId: string) => void
+  /** Sends a report; resolves true when it was recorded. */
+  onReport: (itemType: FeedbackItemType, itemId: string, reason: FeedbackReportReason, comment: string) => Promise<boolean>
 }
 
 export const BriefViewContext = createContext<BriefViewContextValue | null>(null)

@@ -179,8 +179,14 @@ export type StudyBriefDto = z.infer<typeof studyBriefDtoSchema>
 export const briefVersionSummarySchema = studyBriefDtoSchema.omit({ certificationId: true, content: true })
 export type BriefVersionSummary = z.infer<typeof briefVersionSummarySchema>
 
-export const feedbackVerdictSchema = z.enum(['accurate', 'inaccurate', 'outdated'])
+/** Star recommends an item; report flags a problem with it (and requires a reason and a short comment). */
+export const feedbackVerdictSchema = z.enum(['star', 'report'])
 export type FeedbackVerdict = z.infer<typeof feedbackVerdictSchema>
+export const feedbackReportReasonSchema = z.enum(['wrong', 'outdated', 'broken_link', 'other'])
+export type FeedbackReportReason = z.infer<typeof feedbackReportReasonSchema>
+/** Per item: star and report counts, plus the current user's own verdict. */
+export const feedbackSummarySchema = z.object({ stars: z.number().int(), reports: z.number().int(), mine: feedbackVerdictSchema.nullable() })
+export type FeedbackSummary = z.infer<typeof feedbackSummarySchema>
 export const feedbackItemTypeSchema = z.enum(['brief', 'checklist', 'gap', 'resource', 'skill', 'learning_path'])
 export type FeedbackItemType = z.infer<typeof feedbackItemTypeSchema>
 export const followStatusSchema = z.enum(['PLANNING', 'STUDYING', 'PASSED'])
@@ -193,7 +199,7 @@ export const briefPageDtoSchema = z.object({
   activeJob: jobDtoSchema.nullable(),
   progress: z.object({ completedItemIds: z.array(z.string()) }),
   /** Keyed by `${itemType}:${itemId}`. */
-  feedback: z.record(z.string(), z.object({ accurate: z.number().int(), inaccurate: z.number().int(), outdated: z.number().int(), mine: feedbackVerdictSchema.nullable() })),
+  feedback: z.record(z.string(), feedbackSummarySchema),
   following: z.object({ status: followStatusSchema, targetDate: z.string().nullable() }).nullable(),
 })
 export type BriefPageDto = z.infer<typeof briefPageDtoSchema>

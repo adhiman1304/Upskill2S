@@ -8,7 +8,7 @@ import { config } from '../config.js'
 import { prisma } from '../database.js'
 import {
   feedbackItemTypeSchema,
-  feedbackVerdictSchema,
+  feedbackReportReasonSchema,
   followStatusSchema,
   slugIdSchema,
   studyBriefContentSchema,
@@ -16,6 +16,7 @@ import {
   type BriefVersionSummary,
   type BriefPageDto,
   type FeedbackItemType,
+  type FeedbackSummary,
   type FeedbackVerdict,
   type StudyBriefContent,
   type StudyBriefDto,
@@ -32,7 +33,6 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const REFRESH_LIMIT = 3
 const REFRESH_WINDOW_MS = 60 * 60 * 1000
 
-type FeedbackSummary = BriefPageDto['feedback'][string]
 type Following = BriefPageDto['following']
 
 function sendError(response: Response, status: number, body: ApiErrorBody) {
@@ -101,7 +101,14 @@ async function completedItemIds(userId: string, certificationId: string) {
   return rows.map((row) => row.itemId)
 }
 
-const emptySummary = (): FeedbackSummary => ({ accurate: 0, inaccurate: 0, outdated: 0, mine: null })
+const emptySummary = (): FeedbackSummary => ({ stars: 0, reports: 0, mine: null })
+
+/** Maps stored verdicts to star / report. Legacy rows: 'accurate' counts as a star, 'inaccurate' and 'outdated' as reports. */
+function normalizeVerdict(value: string): FeedbackVerdict | null {
+  if (value === 'star' || value === 'accurate') return 'star'
+  if (value === 'report' || value === 'inaccurate' || value === 'outdated') return 'report'
+  return null
+}
 
 /** Counts per `${itemType}:${itemId}` for one brief, plus the current user's own verdict. */
 async function feedbackSummaries(briefId: string, userId: string, only?: { itemType: string; itemId: string }) {
@@ -112,17 +119,16 @@ async function feedbackSummaries(briefId: string, userId: string, only?: { itemT
   ])
   const summaries: Record<string, FeedbackSummary> = {}
   for (const group of groups) {
-    const verdict = feedbackVerdictSchema.safeParse(group.verdict)
-    if (!verdict.success) continue
-    const key = `${group.itemType}:${group.itemId}`
-    const summary = summaries[key] ??= emptySummary()
-    summary[verdict.data] += group._count._all
+    const verdict = normalizeVerdict(group.verdict)
+    if (!verdict) continue
+    const summary = summaries[`${group.itemType}:${group.itemId}`] ??= emptySummary()
+    if (verdict === 'star') summary.stars += group._count._all
+    else summary.reports += group._count._all
   }
   for (const row of mine) {
-    const verdict = feedbackVerdictSchema.safeParse(row.verdict)
-    if (!verdict.success) continue
-    const key = `${row.itemType}:${row.itemId}`
-    ;(summaries[key] ??= emptySummary()).mine = verdict.data
+    const verdict = normalizeVerdict(row.verdict)
+    if (!verdict) continue
+    ;(summaries[`${row.itemType}:${row.itemId}`] ??= emptySummary()).mine = verdict
   }
   return summaries
 }
@@ -254,18 +260,27 @@ briefsRouter.put('/certifications/:id/brief/progress/:itemId', requireAuth, asyn
   response.json({ completedItemIds: await completedItemIds(user.id, certification.id) })
 })
 
-const feedbackSchema = z.object({
+const feedbackTargetSchema = z.object({
   itemType: feedbackItemTypeSchema,
   itemId: z.string().trim().min(1).max(120),
-  verdict: feedbackVerdictSchema,
-  comment: z.string().trim().max(1000).optional(),
 })
+const feedbackSchema = z.discriminatedUnion('verdict', [
+  feedbackTargetSchema.extend({ verdict: z.literal('star') }),
+  feedbackTargetSchema.extend({
+    verdict: z.literal('report'),
+    reason: feedbackReportReasonSchema,
+    comment: z.string().trim().min(3).max(500),
+  }),
+])
 
 // POST /briefs/:briefId/feedback -> { key, summary }
+// star: toggles the user's star (posting it again removes it). report: needs a reason and a 3 to 500 character comment;
+// the reason is stored as a "[reason] " prefix of the comment (the table has no reason column).
+// One row per user and item, so a report replaces the user's star and a star replaces their report.
 briefsRouter.post('/briefs/:briefId/feedback', requireAuth, async (request, response) => {
   const parsed = feedbackSchema.safeParse(request.body)
   if (!parsed.success) {
-    sendError(response, 400, { error: 'Send { itemType, itemId, verdict } with a valid item type and verdict (accurate, inaccurate or outdated).' })
+    sendError(response, 400, { error: 'Send { itemType, itemId, verdict: "star" }, or { itemType, itemId, verdict: "report", reason: wrong | outdated | broken_link | other, comment (3 to 500 characters) }.' })
     return
   }
   const briefId = routeParam(request.params.briefId)
@@ -275,18 +290,21 @@ briefsRouter.post('/briefs/:briefId/feedback', requireAuth, async (request, resp
     sendError(response, 404, { error: 'Study brief not found.' })
     return
   }
-  const { itemType, itemId, verdict, comment } = parsed.data
+  const { itemType, itemId } = parsed.data
   if (!itemExists(content, itemType, itemId)) {
     sendError(response, 404, { error: 'That item is not part of this study brief.' })
     return
   }
   const user = await currentUser(request)
-  const data: { verdict: FeedbackVerdict; comment?: string } = { verdict, ...(comment !== undefined ? { comment } : {}) }
-  await prisma.briefFeedback.upsert({
-    where: { userId_briefId_itemType_itemId: { userId: user.id, briefId: brief.id, itemType, itemId } },
-    create: { userId: user.id, briefId: brief.id, itemType, itemId, ...data },
-    update: data,
-  })
+  const where = { userId_briefId_itemType_itemId: { userId: user.id, briefId: brief.id, itemType, itemId } }
+  if (parsed.data.verdict === 'star') {
+    const existing = await prisma.briefFeedback.findUnique({ where, select: { verdict: true } })
+    if (existing && normalizeVerdict(existing.verdict) === 'star') await prisma.briefFeedback.delete({ where })
+    else await prisma.briefFeedback.upsert({ where, create: { userId: user.id, briefId: brief.id, itemType, itemId, verdict: 'star', comment: '' }, update: { verdict: 'star', comment: '' } })
+  } else {
+    const data = { verdict: 'report', comment: `[${parsed.data.reason}] ${parsed.data.comment}` }
+    await prisma.briefFeedback.upsert({ where, create: { userId: user.id, briefId: brief.id, itemType, itemId, ...data }, update: data })
+  }
   const key = `${itemType}:${itemId}`
   const summaries = await feedbackSummaries(brief.id, user.id, { itemType, itemId })
   response.json({ key, summary: summaries[key] ?? emptySummary() })

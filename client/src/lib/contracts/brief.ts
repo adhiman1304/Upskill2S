@@ -26,7 +26,10 @@ export interface StudyBriefDto { id: string; certificationId: string; version: n
 export type FreshnessStatus = 'fresh' | 'stale' | 'missing'
 /** One row of GET /certifications/:id/brief/versions (newest first). */
 export type BriefVersionSummary = Omit<StudyBriefDto, 'certificationId' | 'content'>
-export type FeedbackVerdict = 'accurate' | 'inaccurate' | 'outdated'
+/** Star recommends an item; report flags a problem (needs a reason and a 3 to 500 character comment). */
+export type FeedbackVerdict = 'star' | 'report'
+export type FeedbackReportReason = 'wrong' | 'outdated' | 'broken_link' | 'other'
+export interface FeedbackSummary { stars: number; reports: number; mine: FeedbackVerdict | null }
 export type FeedbackItemType = 'brief' | 'checklist' | 'gap' | 'resource' | 'skill' | 'learning_path'
 export type FollowStatus = 'PLANNING' | 'STUDYING' | 'PASSED'
 export interface BriefPageDto {
@@ -35,6 +38,6 @@ export interface BriefPageDto {
   freshness: { status: FreshnessStatus; generatedAt: string | null; staleAfterDays: number; ageDays: number | null }
   activeJob: JobDto | null
   progress: { completedItemIds: string[] }
-  feedback: Record<string, { accurate: number; inaccurate: number; outdated: number; mine: FeedbackVerdict | null }> // key `${itemType}:${itemId}`
+  feedback: Record<string, FeedbackSummary> // key `${itemType}:${itemId}`
   following: { status: FollowStatus; targetDate: string | null } | null
 }

@@ -14,10 +14,9 @@ export function fixtureBriefPage(certificationId: string): BriefPageDto {
     activeJob: null,
     progress: { completedItemIds: ['read-the-study-guide', 'take-baseline-practice-assessment', 'start-fabric-trial'] },
     feedback: {
-      'gap:kql-and-real-time-intelligence': { accurate: 7, inaccurate: 0, outdated: 1, mine: null },
-      'gap:preview-features': { accurate: 1, inaccurate: 2, outdated: 0, mine: null },
-      'checklist:read-the-study-guide': { accurate: 4, inaccurate: 0, outdated: 0, mine: 'accurate' },
-      'skill:ingest-and-transform-data': { accurate: 3, inaccurate: 0, outdated: 1, mine: null },
+      'gap:kql-and-real-time-intelligence': { stars: 7, reports: 1, mine: null },
+      'gap:preview-features': { stars: 1, reports: 2, mine: null },
+      'checklist:read-the-study-guide': { stars: 4, reports: 0, mine: 'star' },
     },
     following: { status: 'STUDYING', targetDate: '2026-12-15' },
   }

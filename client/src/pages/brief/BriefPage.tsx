@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle2, FlaskConical, LoaderCircle, Search, Sparkles } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, FlaskConical, LoaderCircle, Search } from 'lucide-react'
 import { useApi } from '../../session'
 import { ApiError } from '../../lib/api/client'
 import { followCertification, getBriefPage, getBriefVersion, listBriefVersions, refreshBrief, sendBriefFeedback, setChecklistProgress, unfollowCertification, type Following } from '../../lib/api/briefs'
 import { getJob } from '../../lib/api/jobs'
-import type { BriefPageDto, BriefVersionSummary, FeedbackItemType, FeedbackVerdict, JobDto, StudyBriefDto } from '../../lib/contracts'
+import type { BriefPageDto, BriefVersionSummary, FeedbackItemType, FeedbackReportReason, FeedbackSummary, JobDto, StudyBriefDto } from '../../lib/contracts'
 import { usePolling } from '../../hooks/usePolling'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
-import { useIsMobile } from '../../hooks/useMediaQuery'
 import { formatDate, message } from '../legacy/utils'
 import { BriefViewContext, type BriefViewContextValue } from './brief-context'
-import { advanceFixtureJob, applyVote, createFixtureJob, isTerminal, sourceIndex } from './brief-utils'
+import { advanceFixtureJob, applyReport, applyStar, createFixtureJob, isTerminal, sourceIndex } from './brief-utils'
 import { BriefBody } from './BriefBody'
 import { BriefHeader } from './BriefHeader'
 import { JobPanel, RefreshIssueCallout, type RefreshIssue } from './JobPanel'
@@ -35,7 +34,6 @@ export function BriefPage() {
 
 function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   const request = useApi()
-  const mobile = useIsMobile()
   const [page, setPage] = useState<BriefPageDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -106,25 +104,52 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
     }
   }, [fixture, id, request])
 
-  const vote = useCallback(async (itemType: FeedbackItemType, itemId: string, verdict: FeedbackVerdict) => {
+  const setFeedback = useCallback((key: string, summary: FeedbackSummary | undefined) => setPage((current) => current && {
+    ...current,
+    feedback: summary ? { ...current.feedback, [key]: summary } : Object.fromEntries(Object.entries(current.feedback).filter(([entry]) => entry !== key)),
+  }), [])
+
+  const markPending = useCallback((key: string, pending: boolean) => setPendingVotes((current) => {
+    const next = new Set(current)
+    if (pending) next.add(key); else next.delete(key)
+    return next
+  }), [])
+
+  const star = useCallback(async (itemType: FeedbackItemType, itemId: string) => {
     if (!page?.brief) return
     const briefId = page.brief.id
     const key = `${itemType}:${itemId}`
     const previous = page.feedback[key]
-    const setSummary = (summary: typeof previous) => setPage((current) => current && { ...current, feedback: summary ? { ...current.feedback, [key]: summary } : Object.fromEntries(Object.entries(current.feedback).filter(([entry]) => entry !== key)) })
-    setSummary(applyVote(previous, verdict))
+    setFeedback(key, applyStar(previous))
     if (fixture) return
-    setPendingVotes((current) => new Set(current).add(key))
+    markPending(key, true)
     try {
-      const result = await sendBriefFeedback(request, briefId, { itemType, itemId, verdict })
-      setSummary(result.summary)
+      const result = await sendBriefFeedback(request, briefId, { itemType, itemId, verdict: 'star' })
+      setFeedback(key, result.summary)
     } catch (reason) {
-      setSummary(previous)
-      setActionError(message(reason, 'Could not record your feedback.'))
+      setFeedback(key, previous)
+      setActionError(message(reason, 'Could not save your recommendation.'))
     } finally {
-      setPendingVotes((current) => { const next = new Set(current); next.delete(key); return next })
+      markPending(key, false)
     }
-  }, [fixture, page, request])
+  }, [fixture, markPending, page, request, setFeedback])
+
+  const report = useCallback(async (itemType: FeedbackItemType, itemId: string, reason: FeedbackReportReason, comment: string) => {
+    if (!page?.brief) return false
+    const key = `${itemType}:${itemId}`
+    if (fixture) { setFeedback(key, applyReport(page.feedback[key])); return true }
+    markPending(key, true)
+    try {
+      const result = await sendBriefFeedback(request, page.brief.id, { itemType, itemId, verdict: 'report', reason, comment })
+      setFeedback(key, result.summary)
+      return true
+    } catch (error) {
+      setActionError(message(error, 'Could not send your report.'))
+      return false
+    } finally {
+      markPending(key, false)
+    }
+  }, [fixture, markPending, page, request, setFeedback])
 
   const changeFollow = useCallback(async (next: Following) => {
     setActionError('')
@@ -154,17 +179,15 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   }, [currentBrief, fixture, id, request])
 
   const shownBrief = viewing ?? currentBrief
-  const checklist = shownBrief?.content.checklist ?? null
-  const completedIds = new Set(viewing ? [] : page?.progress.completedItemIds ?? [])
-  const progress = !checklist ? null : checklist.length ? Math.round((checklist.filter((item) => completedIds.has(item.id)).length / checklist.length) * 100) : 0
   useDocumentTitle(page ? `Study Brief: ${page.certification.code}` : 'Study Brief')
   const contextValue = useMemo<BriefViewContextValue>(() => ({
     sources: sourceIndex(shownBrief?.content.sources ?? []),
     feedback: viewing ? {} : page?.feedback ?? {},
     readOnly: Boolean(viewing),
     pendingVotes,
-    onVote: (itemType, itemId, verdict) => void vote(itemType, itemId, verdict),
-  }), [page?.feedback, pendingVotes, shownBrief, viewing, vote])
+    onStar: (itemType, itemId) => void star(itemType, itemId),
+    onReport: report,
+  }), [page?.feedback, pendingVotes, report, shownBrief, star, viewing])
 
   if (!page) return <div className="page-content page-wide brief-page">
     <Link className="back-link" to="/"><ArrowLeft size={16} /> Find a certification</Link>
@@ -174,26 +197,26 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   return <div className="page-content page-wide brief-page">
     <Link className="back-link" to="/"><ArrowLeft size={16} /> Find a certification</Link>
     {fixture && <div className="alert warning"><FlaskConical size={15} /> Sample data: a hand-written DP-700 fixture for development. Nothing on this page is saved.</div>}
-    <BriefHeader page={page} fixture={fixture} refreshing={starting} jobRunning={jobActive} onRefresh={() => void startRefresh()} onOpenVersions={() => setVersionsOpen(true)} onFollowChange={changeFollow} progress={progress} />
+    <BriefHeader page={page} fixture={fixture} starting={starting} onRefresh={() => void startRefresh()} onFollowChange={changeFollow}
+      jobPanel={job ? <JobPanel job={job} onRetry={() => void startRefresh()} onDismiss={() => setJob(null)} /> : null} />
     {refreshIssue && <RefreshIssueCallout issue={refreshIssue} onDismiss={() => setRefreshIssue(null)} />}
-    {job && <JobPanel job={job} onRetry={() => void startRefresh()} onDismiss={() => setJob(null)} />}
     {notice && <div className="alert success" role="status"><CheckCircle2 size={15} /> {notice}<button type="button" className="text-button" onClick={() => setNotice('')}>Dismiss</button></div>}
     {actionError && <div className="alert error" role="alert">{actionError}</div>}
     {viewing && <div className="alert">Viewing version {viewing.version} from {formatDate(viewing.generatedAt)} (read only).<button type="button" className="text-button" onClick={() => setViewing(null)}>Back to the current brief</button></div>}
     <BriefViewContext.Provider value={contextValue}>
       {shownBrief
-        ? <BriefBody brief={shownBrief} mobile={mobile} completedItemIds={viewing ? [] : page.progress.completedItemIds} onToggle={(itemId, completed) => void toggleItem(itemId, completed)} />
-        : !job && <EmptyBrief code={page.certification.code} starting={starting} onGenerate={() => void startRefresh()} />}
+        ? <BriefBody brief={shownBrief} completedItemIds={viewing ? [] : page.progress.completedItemIds} onToggle={(itemId, completed) => void toggleItem(itemId, completed)} onOpenVersions={() => setVersionsOpen(true)} />
+        : !job && <EmptyBrief code={page.certification.code} />}
     </BriefViewContext.Provider>
     {versionsOpen && <VersionsDrawer load={loadVersions} viewingId={viewing?.id ?? null} onSelect={(version) => void selectVersion(version)} onClose={() => setVersionsOpen(false)} />}
   </div>
 }
 
-function EmptyBrief({ code, starting, onGenerate }: { code: string; starting: boolean; onGenerate: () => void }) {
+/** No brief yet: explains what "Generate study brief" in the hero does (the hero holds the one primary action). */
+function EmptyBrief({ code }: { code: string }) {
   return <section className="empty-state brief-empty">
     <Search className="empty-icon" size={20} aria-hidden="true" />
     <h3>No study brief for {code} yet</h3>
     <p>The research agent reads the official exam page and skills outline, the official learning path and practice assessment, and community discussions (forums, videos and blogs). It then writes a cited study brief with a step-by-step checklist. It runs with your OpenAI API key and usually takes a few minutes.</p>
-    <button type="button" className="button button-primary" onClick={onGenerate} disabled={starting}>{starting ? <LoaderCircle className="spin" size={15} /> : <Sparkles size={15} />} Generate study brief</button>
   </section>
 }

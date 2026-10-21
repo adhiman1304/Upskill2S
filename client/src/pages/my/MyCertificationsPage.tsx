@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { BookmarkCheck, Check, LoaderCircle, Plus, Search, Trash2, X } from 'lucide-react'
+import { Select } from '../../components/ui/Select'
 import { Tabs } from '../../components/ui/Tabs'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useTabParam } from '../../hooks/useTabParam'
@@ -102,7 +103,6 @@ export function MyCertificationsPage() {
 
 function MyCertificationRow({ item, busy, disabled, onStatus, onRemove }: { item: MyCertificationDto; busy: boolean; disabled: boolean; onStatus: (status: FollowStatus) => void; onRemove: () => void }) {
   const [confirming, setConfirming] = useState(false)
-  const selectId = useId()
   const passed = item.status === 'PASSED'
   const meta: ReactNode[] = []
   if (passed) {
@@ -129,10 +129,8 @@ function MyCertificationRow({ item, busy, disabled, onStatus, onRemove }: { item
             <button type="button" className="button button-quiet button-small" onClick={() => setConfirming(false)}>Keep</button>
           </span>
         : <>
-            <label className="sr-only" htmlFor={selectId}>Status for {item.code}</label>
-            <select id={selectId} className="my-cert-select" value={item.status} disabled={disabled} onChange={(event) => onStatus(event.target.value as FollowStatus)}>
-              {(['STUDYING', 'PLANNING', 'PASSED'] as const).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
-            </select>
+            <Select className="my-cert-select" size="sm" align="end" label={`Status for ${item.code}`} value={item.status} disabled={disabled} onChange={onStatus}
+              options={(['STUDYING', 'PLANNING', 'PASSED'] as const).map((status) => ({ value: status, label: statusLabels[status] }))} />
             {busy ? <span className="icon-button" aria-hidden="true"><LoaderCircle className="spin" size={15} /></span>
               : <button type="button" className="icon-button" aria-label={`Remove ${item.code}`} title="Remove" disabled={disabled} onClick={() => setConfirming(true)}><Trash2 size={15} /></button>}
           </>}

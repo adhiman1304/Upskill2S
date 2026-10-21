@@ -1,6 +1,5 @@
 // Non-component helpers for the study brief page (kept out of .tsx files for react-refresh).
-import type { BriefPageDto, BriefSource, ChecklistItem, FeedbackVerdict, FreshnessStatus, JobDto } from '../../lib/contracts'
-import type { FeedbackSummary } from '../../lib/api/briefs'
+import type { BriefPageDto, BriefSource, ChecklistItem, FeedbackReportReason, FeedbackSummary, FreshnessStatus, JobDto } from '../../lib/contracts'
 
 /** Returns the URL only when it is an absolute HTTPS URL; anything else is not rendered as a link. */
 export function safeUrl(value: string | null | undefined) {
@@ -43,17 +42,30 @@ export function sourceIndex(sources: BriefSource[]) {
 export const terminalStatuses: ReadonlySet<JobDto['status']> = new Set(['SUCCEEDED', 'FAILED', 'CANCELLED'])
 export const isTerminal = (job: JobDto | null) => Boolean(job && terminalStatuses.has(job.status))
 
-export const emptyFeedback = (): FeedbackSummary => ({ accurate: 0, inaccurate: 0, outdated: 0, mine: null })
+export const emptyFeedback = (): FeedbackSummary => ({ stars: 0, reports: 0, mine: null })
 
-/** Local (optimistic / fixture) application of a user's vote to a summary. */
-export function applyVote(summary: FeedbackSummary | undefined, verdict: FeedbackVerdict): FeedbackSummary {
+/** Local (optimistic / fixture) toggle of the user's star, mirroring the server: a star replaces the user's report. */
+export function applyStar(summary: FeedbackSummary | undefined): FeedbackSummary {
   const next = { ...(summary ?? emptyFeedback()) }
-  if (next.mine === verdict) return next
-  if (next.mine) next[next.mine] = Math.max(0, next[next.mine] - 1)
-  next[verdict] += 1
-  next.mine = verdict
-  return next
+  if (next.mine === 'star') return { ...next, stars: Math.max(0, next.stars - 1), mine: null }
+  if (next.mine === 'report') next.reports = Math.max(0, next.reports - 1)
+  return { ...next, stars: next.stars + 1, mine: 'star' }
 }
+
+/** Local (fixture) application of a report: replaces the user's star. */
+export function applyReport(summary: FeedbackSummary | undefined): FeedbackSummary {
+  const next = { ...(summary ?? emptyFeedback()) }
+  if (next.mine === 'report') return next
+  if (next.mine === 'star') next.stars = Math.max(0, next.stars - 1)
+  return { ...next, reports: next.reports + 1, mine: 'report' }
+}
+
+export const reportReasons: { value: FeedbackReportReason; label: string }[] = [
+  { value: 'wrong', label: 'Wrong or misleading' },
+  { value: 'outdated', label: 'Outdated' },
+  { value: 'broken_link', label: 'Broken link' },
+  { value: 'other', label: 'Something else' },
+]
 
 const fixtureSteps = [
   'Started.',
