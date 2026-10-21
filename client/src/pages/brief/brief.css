@@ -189,10 +189,10 @@ a.brief-item-title:hover { color: var(--color-accent); text-decoration: underlin
 .brief-version-list button.is-active { background: var(--color-accent-soft); }
 
 @media (min-width: 900px) {
-  /* Tab row: left-aligned segmented control, sticky at the top of the viewport once the hero scrolls away */
+  /* Tab row: spans the content width with five evenly sized tabs, sticky at the top of the viewport once the hero scrolls away */
   .brief-tabs .tabs { position: sticky; z-index: 15; top: 0; margin: 0 0 var(--space-5); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); background: var(--color-bg); }
-  .brief-tabs .tabs-list { display: inline-flex; padding: 2px; }
-  .brief-tabs .tab { flex: 0 0 auto; padding: 0 var(--space-4); font-size: var(--text-base); }
+  .brief-tabs .tabs-list { display: flex; max-width: 820px; padding: 3px; gap: 4px; }
+  .brief-tabs .tab { flex: 1 1 0; min-height: 44px; padding: 0 var(--space-3); font-size: var(--text-base); }
 }
 @media (max-width: 899px) {
   .brief-page.page-content { padding-top: var(--space-3); }
