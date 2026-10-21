@@ -1,10 +1,273 @@
-// STUB owned by workstream D (catalog). S0 placeholder; replace wholesale.
-import type { CatalogHitDto, ResolveCertificationInput } from '../../lib/contracts/index.js'
+// Owned by workstream D. Certification catalog: search over db rows + the seed catalog, and find-or-create.
+import { readFileSync } from 'node:fs'
+import { Prisma } from '../../generated/prisma/client.js'
+import { config } from '../../config.js'
+import { prisma } from '../../database.js'
+import { catalogSeedEntrySchema, type CatalogHitDto, type CatalogSeedEntry, type FreshnessStatus, type ResolveCertificationInput } from '../../lib/contracts/index.js'
+import { normalizeKey } from '../../lib/validation.js'
 
-export async function searchCatalog(_query: string, _userId: string): Promise<CatalogHitDto[]> {
-  return []
+const SEARCH_LIMIT = 15
+const MINE_LIMIT = 12
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Common alternative provider names, mapped to the provider name used in the catalog. */
+const providerAliases: Record<string, string> = {
+  amazon: 'aws',
+  'amazon web services': 'aws',
+  azure: 'microsoft',
+  'microsoft azure': 'microsoft',
+  google: 'google cloud',
+  gcp: 'google cloud',
+  'google cloud platform': 'google cloud',
+  '(isc)2': 'isc2',
+  '(isc)²': 'isc2',
+  axelos: 'peoplecert',
+  'the linux foundation': 'linux foundation',
+  cncf: 'linux foundation',
+  hashicorp: 'hashicorp',
+  'red hat': 'red hat',
+  redhat: 'red hat',
+  'project management institute': 'pmi',
 }
 
-export async function resolveCertification(_input: ResolveCertificationInput, _userId: string): Promise<{ id: string }> {
-  throw new Error('Catalog resolve not implemented yet (workstream D).')
+// --- seed catalog -------------------------------------------------------------------------------
+
+// Same relative depth from src/services/catalog and dist/services/catalog: <repo>/prisma/seed/catalog.json.
+const catalogFileUrl = new URL('../../../../prisma/seed/catalog.json', import.meta.url)
+let catalogCache: CatalogSeedEntry[] | null = null
+
+/** Entries from prisma/seed/catalog.json (validated, HTTPS-only URLs). Cached after the first read. */
+export function listCatalogEntries(): CatalogSeedEntry[] {
+  if (catalogCache) return catalogCache
+  try {
+    const parsed = catalogSeedEntrySchema.array().parse(JSON.parse(readFileSync(catalogFileUrl, 'utf8')))
+    catalogCache = parsed.map((entry) => ({ ...entry, officialUrl: httpsOrNull(entry.officialUrl) }))
+  } catch (error) {
+    console.error('Could not load the certification seed catalog; catalog search will only use the database.', error)
+    catalogCache = []
+  }
+  return catalogCache
+}
+
+// --- helpers ------------------------------------------------------------------------------------
+
+function httpsOrNull(value: string | null | undefined) {
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    return url.protocol === 'https:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
+
+/** Lower-case, alphanumerics (and '+') only: "DP-700" and "dp700" compare equal. */
+function compact(value: string) {
+  return normalizeKey(value).replace(/[^\p{L}\p{N}+]/gu, '')
+}
+
+function canonicalProviderKey(provider: string) {
+  const key = normalizeKey(provider)
+  return providerAliases[key] ?? key
+}
+
+function entryKey(providerKey: string, codeKey: string) {
+  return `${providerKey}\u0000${codeKey}`
+}
+
+function parseAliases(raw: string): string[] {
+  try {
+    const value = JSON.parse(raw) as unknown
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function freshnessOf(generatedAt: Date | null | undefined): FreshnessStatus {
+  if (!generatedAt) return 'missing'
+  return Date.now() - generatedAt.getTime() <= config.briefStaleDays * DAY_MS ? 'fresh' : 'stale'
+}
+
+/** Generation time of the CURRENT brief per certification. */
+async function currentBriefDates(certificationIds: string[]) {
+  if (!certificationIds.length) return new Map<string, Date>()
+  const briefs = await prisma.studyBrief.findMany({
+    where: { certificationId: { in: certificationIds }, status: 'CURRENT' },
+    select: { certificationId: true, generatedAt: true },
+  })
+  const dates = new Map<string, Date>()
+  for (const brief of briefs) {
+    const previous = dates.get(brief.certificationId)
+    if (!previous || brief.generatedAt > previous) dates.set(brief.certificationId, brief.generatedAt)
+  }
+  return dates
+}
+
+type CertificationRow = { id: string; provider: string; code: string; title: string; officialUrl: string | null; lastResearchedAt: Date | null }
+
+function dbHit(row: CertificationRow, briefDates: Map<string, Date>): CatalogHitDto {
+  return {
+    certificationId: row.id,
+    provider: row.provider,
+    code: row.code,
+    title: row.title,
+    officialUrl: httpsOrNull(row.officialUrl),
+    source: 'db',
+    briefStatus: freshnessOf(briefDates.get(row.id)),
+    lastResearchedAt: row.lastResearchedAt?.toISOString() ?? null,
+  }
+}
+
+function catalogHit(entry: CatalogSeedEntry): CatalogHitDto {
+  return { certificationId: null, provider: entry.provider, code: entry.code, title: entry.title, officialUrl: entry.officialUrl, source: 'catalog', briefStatus: 'missing', lastResearchedAt: null }
+}
+
+/**
+ * Rank of a candidate for the query (lower is better), or null when it does not match.
+ * 0 exact code, 1 exact alias/title, 2 code prefix, 3 alias/title/provider prefix or word start, 4 substring.
+ */
+function matchRank(query: string, candidate: { provider: string; code: string; title: string; aliases: string[] }): number | null {
+  const q = normalizeKey(query)
+  const qc = compact(query)
+  if (!q) return null
+  const code = normalizeKey(candidate.code)
+  const codeCompact = compact(candidate.code)
+  const names = [candidate.title, ...candidate.aliases].map(normalizeKey)
+  const namesCompact = names.map(compact)
+
+  if (code === q || (qc && codeCompact === qc)) return 0
+  const qLoose = qc.replace(/\+/g, '')
+  if (names.some((name, index) => name === q || (qLoose.length > 1 && (namesCompact[index] ?? '').replace(/\+/g, '') === qLoose))) return 1
+  if (code.startsWith(q) || (qc && codeCompact.startsWith(qc))) return 2
+  const words = [candidate.provider, ...names].map(normalizeKey)
+  if (words.some((name) => name.startsWith(q) || name.split(/[\s:/()-]+/).some((word) => word && word.startsWith(q)))) return 3
+  if (namesCompact.some((name) => qc.length > 1 && name.startsWith(qc))) return 3
+
+  const haystack = [candidate.provider, candidate.code, ...names].map(normalizeKey).join(' ')
+  const haystackCompact = compact(haystack)
+  const tokens = q.split(/\s+/).filter(Boolean)
+  if (tokens.every((token) => haystack.includes(token) || (compact(token) && haystackCompact.includes(compact(token))))) return 4
+  return null
+}
+
+// --- search -------------------------------------------------------------------------------------
+
+/**
+ * Empty query: the user's followed certifications, then recently researched ones (max 12).
+ * Otherwise: db certifications and not-yet-imported catalog entries matching provider, code, title or aliases (max 15).
+ */
+export async function searchCatalog(query: string, userId: string): Promise<CatalogHitDto[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return myCertifications(userId)
+
+  const rows = await prisma.certification.findMany({
+    select: { id: true, provider: true, providerKey: true, code: true, codeKey: true, title: true, officialUrl: true, aliases: true, lastResearchedAt: true },
+    orderBy: { updatedAt: 'desc' },
+    take: 5000,
+  })
+  const dbKeys = new Set(rows.map((row) => entryKey(canonicalProviderKey(row.providerKey), row.codeKey)))
+
+  type Ranked = { rank: number; source: 'db' | 'catalog'; researched: number; code: string; row?: (typeof rows)[number]; entry?: CatalogSeedEntry }
+  const ranked: Ranked[] = []
+  for (const row of rows) {
+    const rank = matchRank(trimmed, { provider: row.provider, code: row.code, title: row.title, aliases: parseAliases(row.aliases) })
+    if (rank !== null) ranked.push({ rank, source: 'db', researched: row.lastResearchedAt?.getTime() ?? 0, code: row.code, row })
+  }
+  for (const entry of listCatalogEntries()) {
+    if (dbKeys.has(entryKey(canonicalProviderKey(entry.provider), normalizeKey(entry.code)))) continue
+    const rank = matchRank(trimmed, entry)
+    if (rank !== null) ranked.push({ rank, source: 'catalog', researched: 0, code: entry.code, entry })
+  }
+
+  ranked.sort((a, b) => a.rank - b.rank || b.researched - a.researched || (a.source === b.source ? 0 : a.source === 'db' ? -1 : 1) || a.code.localeCompare(b.code))
+  const top = ranked.slice(0, SEARCH_LIMIT)
+  const briefDates = await currentBriefDates(top.flatMap((item) => (item.row ? [item.row.id] : [])))
+  return top.map((item) => (item.row ? dbHit(item.row, briefDates) : catalogHit(item.entry!)))
+}
+
+async function myCertifications(userId: string): Promise<CatalogHitDto[]> {
+  const select = { id: true, provider: true, code: true, title: true, officialUrl: true, lastResearchedAt: true } as const
+  const followed = await prisma.userCertification.findMany({
+    where: { userId },
+    orderBy: { updatedAt: 'desc' },
+    take: MINE_LIMIT,
+    select: { certification: { select } },
+  })
+  const rows: CertificationRow[] = followed.map((item) => item.certification)
+  if (rows.length < MINE_LIMIT) {
+    const recent = await prisma.certification.findMany({
+      where: { lastResearchedAt: { not: null }, id: { notIn: rows.map((row) => row.id) } },
+      orderBy: { lastResearchedAt: 'desc' },
+      take: MINE_LIMIT - rows.length,
+      select,
+    })
+    rows.push(...recent)
+  }
+  const briefDates = await currentBriefDates(rows.map((row) => row.id))
+  return rows.map((row) => dbHit(row, briefDates))
+}
+
+// --- resolve ------------------------------------------------------------------------------------
+
+/** Seed catalog entry for a provider + code (exact code first, then a code-like alias such as "AZ900"). */
+function findCatalogEntry(provider: string, code: string): CatalogSeedEntry | null {
+  const providerKey = canonicalProviderKey(provider)
+  const codeKey = normalizeKey(code)
+  const codeCompact = compact(code)
+  const candidates = listCatalogEntries().filter((entry) => canonicalProviderKey(entry.provider) === providerKey)
+  return candidates.find((entry) => normalizeKey(entry.code) === codeKey)
+    ?? candidates.find((entry) => compact(entry.code) === codeCompact)
+    ?? candidates.find((entry) => entry.aliases.some((alias) => /\d/.test(alias) && compact(alias) === codeCompact))
+    ?? null
+}
+
+/** Find-or-create by normalized provider + code. Reports whether a row was created. */
+export async function findOrCreateCertification(input: ResolveCertificationInput, userId: string): Promise<{ id: string; created: boolean }> {
+  const entry = findCatalogEntry(input.provider, input.code)
+  const provider = entry?.provider ?? input.provider.trim()
+  const code = (entry?.code ?? input.code.trim()).toUpperCase()
+  const providerKey = normalizeKey(provider)
+  const codeKey = normalizeKey(code)
+
+  // Also accept a row stored under the provider/code exactly as the caller typed them (e.g. a legacy "Amazon Web Services" row).
+  const providerKeys = [...new Set([providerKey, normalizeKey(input.provider)])]
+  const codeKeys = [...new Set([codeKey, normalizeKey(input.code)])]
+  const lookup = () => prisma.certification.findFirst({
+    where: { providerKey: { in: providerKeys }, codeKey: { in: codeKeys } },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  })
+  const existing = await lookup()
+  if (existing) return { id: existing.id, created: false }
+
+  try {
+    const created = await prisma.certification.create({
+      data: {
+        provider,
+        providerKey,
+        code,
+        codeKey,
+        title: entry?.title ?? input.title.trim(),
+        officialUrl: httpsOrNull(input.officialUrl) ?? entry?.officialUrl ?? null,
+        aliases: JSON.stringify(entry?.aliases ?? []),
+        isCatalog: Boolean(entry),
+        createdById: userId,
+      },
+      select: { id: true },
+    })
+    return { id: created.id, created: true }
+  } catch (error) {
+    // A concurrent request created the same certification first.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      const raced = await lookup()
+      if (raced) return { id: raced.id, created: false }
+    }
+    throw error
+  }
+}
+
+export async function resolveCertification(input: ResolveCertificationInput, userId: string): Promise<{ id: string }> {
+  const { id } = await findOrCreateCertification(input, userId)
+  return { id }
 }

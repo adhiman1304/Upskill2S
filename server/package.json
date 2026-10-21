@@ -12,7 +12,9 @@
     "start": "node dist/index.js",
     "lint": "eslint src --max-warnings=0",
     "db:generate": "prisma generate --config prisma.config.ts",
-    "db:migrate": "prisma migrate dev --config prisma.config.ts"
+    "db:migrate": "prisma migrate dev --config prisma.config.ts",
+    "db:seed": "tsx ../prisma/seed/seed.ts",
+    "research": "tsx src/scripts/research-cli.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.15",
@@ -23,8 +25,11 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "jose": "^6.1.0",
+    "mammoth": "^1.13.0",
     "multer": "^2.0.2",
+    "node-cron": "^4.6.0",
     "openai": "^6.49.0",
+    "pdf-parse": "^2.4.5",
     "sanitize-html": "^2.17.0",
     "zod": "^4.1.12"
   },
