@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { usePolling } from '../../hooks/usePolling'
+import { Tabs } from '../../components/ui/Tabs'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 import { ApiError } from '../../lib/api/client'
 import { cancelAdminJob, getOpsSummary, getStaleCertifications, listAdminJobs, refreshStale, type AdminJobDto, type JobKind, type JobStatus, type RefreshStaleResult } from '../../lib/api/adminOps'
 import { useApi } from '../../session'
@@ -27,6 +29,7 @@ function describeRefresh(result: RefreshStaleResult) {
 export function AdminOpsPage() {
   useDocumentTitle('Operations')
   const request = useApi()
+  const mobile = useIsMobile()
   const [status, setStatus] = useState<JobStatus | ''>('')
   const [kind, setKind] = useState<JobKind | ''>('')
   const [onlyFollowed, setOnlyFollowed] = useState(true)
@@ -96,10 +99,17 @@ export function AdminOpsPage() {
     <header className="page-header"><div><h1>Operations</h1><p className="page-desc">Research jobs, brief freshness and the nightly refresh.</p></div></header>
     {summary.error && <div className="alert error">{errorText(summary.error, 'Could not load the operations summary.')}</div>}
     {notice && <div className={`alert ${notice.tone === 'error' ? 'error' : 'success'}`} role="status"><span>{notice.text}</span><button className="icon-button ops-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss">×</button></div>}
-    <SummaryTiles summary={summary.data} />
-    <SchedulerCard scheduler={scheduler} blockedReason={blockedReason} refreshing={refreshingAll} onRefreshAll={() => void refreshAll()} onlyFollowed={onlyFollowed} />
-    {stale.error && <div className="alert error">{errorText(stale.error, 'Could not load stale certifications.')}</div>}
-    <StaleTable data={stale.data} loading={!stale.data && !stale.error} onlyFollowed={onlyFollowed} onToggleFollowed={setOnlyFollowed} blockedReason={blockedReason} pendingIds={pendingIds} onRefresh={(id) => void refreshOne(id)} />
-    <JobsTable jobs={jobs.data} error={jobs.error ? errorText(jobs.error, 'Could not load jobs.') : null} status={status} kind={kind} onStatus={setStatus} onKind={setKind} cancellingId={cancellingId} onCancel={(job) => void cancel(job)} />
+    {/* Mobile: Summary | Stale | Jobs tabs. Desktop: the same panels stacked in this order. */}
+    <Tabs mode={mobile ? 'tabs' : 'stacked'} label="Operations sections" tabs={[
+      { id: 'summary', label: 'Summary', content: <>
+        <SummaryTiles summary={summary.data} />
+        <SchedulerCard scheduler={scheduler} blockedReason={blockedReason} refreshing={refreshingAll} onRefreshAll={() => void refreshAll()} onlyFollowed={onlyFollowed} />
+      </> },
+      { id: 'stale', label: 'Stale', content: <>
+        {stale.error && <div className="alert error">{errorText(stale.error, 'Could not load stale certifications.')}</div>}
+        <StaleTable data={stale.data} loading={!stale.data && !stale.error} onlyFollowed={onlyFollowed} onToggleFollowed={setOnlyFollowed} blockedReason={blockedReason} pendingIds={pendingIds} onRefresh={(id) => void refreshOne(id)} />
+      </> },
+      { id: 'jobs', label: 'Jobs', content: <JobsTable jobs={jobs.data} error={jobs.error ? errorText(jobs.error, 'Could not load jobs.') : null} status={status} kind={kind} onStatus={setStatus} onKind={setKind} cancellingId={cancellingId} onCancel={(job) => void cancel(job)} /> },
+    ]} />
   </div>
 }

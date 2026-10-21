@@ -13,20 +13,24 @@ interface BriefHeaderProps {
   onRefresh: () => void
   onOpenVersions: () => void
   onFollowChange: (next: Following) => Promise<void>
+  /** Checklist completion, shown in the title row on mobile so it stays visible on every tab. Null without a brief. */
+  progress: number | null
 }
 
-export function BriefHeader({ page, fixture, refreshing, jobRunning, onRefresh, onOpenVersions, onFollowChange }: BriefHeaderProps) {
+export function BriefHeader({ page, fixture, refreshing, jobRunning, onRefresh, onOpenVersions, onFollowChange, progress }: BriefHeaderProps) {
   const { certification, freshness, brief } = page
   const officialUrl = safeUrl(certification.officialUrl ?? brief?.content.certification.officialUrl)
   return <header className="brief-header">
     <div className="brief-title-row">
       <span className="provider-logo" title={certification.provider}><ProviderLogo name={certification.provider} /></span>
       <h1><span className="brief-code">{certification.code}</span> {certification.title}{certification.status === 'RETIRED' && <span className="chip chip-warning">Retired</span>}{fixture && <span className="chip chip-warning">Sample data</span>}</h1>
+      {progress !== null && <span className="brief-header-progress" title="Checklist progress"><span className="sr-only">Checklist </span>{progress}%<span className="sr-only"> complete</span></span>}
     </div>
     <div className="brief-header-meta">
       <span className="sr-only">{certification.provider}</span>
       <FreshnessChip freshness={freshness} />
-      {officialUrl && <a href={officialUrl} target="_blank" rel="noopener noreferrer">Official exam page <ExternalLink size={12} aria-hidden="true" /></a>}
+      {certification.status === 'RETIRED' && <span className="chip chip-warning brief-meta-retired" aria-hidden="true">Retired</span>}
+      {officialUrl && <a href={officialUrl} target="_blank" rel="noopener noreferrer"><span className="brief-official-word">Official exam</span><span className="brief-official-short">Exam</span> page <ExternalLink size={12} aria-hidden="true" /></a>}
       {brief && <button type="button" className="text-button brief-versions-button" onClick={onOpenVersions}><History size={14} aria-hidden="true" /> Version {brief.version}<span className="brief-source-count"> · {brief.sourceCount} sources</span></button>}
     </div>
     <div className="brief-controls">

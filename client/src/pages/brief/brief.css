@@ -11,6 +11,7 @@
 .brief-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-1); }
 .brief-follow { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
 .brief-refresh { margin-left: auto; }
+.brief-header-progress, .brief-official-short, .brief-meta-retired { display: none; }
 
 /* Job progress */
 .brief-job { margin: var(--space-3) 0; padding: var(--space-3); border-radius: var(--radius); background: var(--color-surface-muted); }
@@ -108,6 +109,10 @@ a.brief-source-chip:hover { border-color: var(--color-focus); color: var(--color
 .brief-sources summary::before { content: ''; width: 7px; height: 7px; border-right: 1.5px solid var(--color-text-subtle); border-bottom: 1.5px solid var(--color-text-subtle); transform: translateY(-2px) rotate(-45deg); transition: transform 0.15s; }
 .brief-sources[open] summary::before { transform: translateY(-3px) rotate(45deg); }
 .brief-sources summary .muted-inline { font-size: var(--text-sm); }
+.brief-sources.is-flat { padding-top: 0; border-top: 0; }
+.brief-sources-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); }
+.brief-sources-head .muted-inline { font-size: var(--text-sm); }
+.brief-tab-stack { display: grid; gap: var(--space-6); }
 .brief-sources ol { display: grid; gap: var(--space-2); margin-top: var(--space-3); padding-left: 22px; color: var(--color-text-subtle); font-size: var(--text-sm); }
 .brief-sources li a { display: inline-flex; align-items: center; gap: 3px; font-weight: var(--weight-medium); }
 .brief-sources q { display: block; margin-top: 2px; color: var(--color-text-muted); font-style: italic; }
@@ -132,10 +137,34 @@ a.brief-source-chip:hover { border-color: var(--color-focus); color: var(--color
 @media (max-width: 899px) {
   .brief-page.page-content { padding-top: var(--space-3); }
   .brief-page > .back-link { display: none; }
-  .brief-header { padding-bottom: var(--space-3); }
-  .brief-title-row h1 { font-size: var(--text-md); }
+  /* Compact header: one line of code and title, one line of chips, one row of controls */
+  .brief-header { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); padding-bottom: var(--space-3); border-bottom: 0; }
+  .brief-header > * { min-width: 0; }
+  .brief-title-row { align-items: center; gap: var(--space-2); }
+  .brief-title-row .provider-logo { width: 28px; height: 28px; margin-top: 0; }
+  .brief-title-row h1 { flex: 1; overflow: hidden; font-size: var(--text-md); text-overflow: ellipsis; white-space: nowrap; }
+  .brief-title-row h1 .chip { display: none; }
+  .brief-header-progress { display: inline; flex: 0 0 auto; color: var(--color-accent); font-weight: var(--weight-heading); font-variant-numeric: tabular-nums; }
+  .brief-header-meta { flex-wrap: nowrap; overflow: hidden; white-space: nowrap; }
+  .brief-header-meta > * { flex: 0 0 auto; }
+  .brief-official-word { display: none; }
+  .brief-official-short { display: inline; }
+  .brief-meta-retired { display: inline-flex; }
+  .brief-controls { flex-wrap: nowrap; gap: var(--space-2); margin-top: 0; }
+  .brief-follow { min-width: 0; flex: 1; flex-wrap: nowrap; gap: var(--space-2); }
+  .brief-follow .inline-field { min-width: 0; flex: 1; }
+  .brief-follow .inline-field > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .brief-follow .inline-field select, .brief-follow .inline-field input { width: 100%; min-width: 0; padding-right: 6px; padding-left: 8px; }
+  .brief-follow .inline-field:first-child:not(:only-child) { flex: 0 1 116px; }
+  .brief-refresh { flex: 0 0 auto; padding: 0 var(--space-3); }
+  .brief-refresh > svg:not(.spin) { display: none; }
+  .brief-body-tabs { margin-top: 0; }
   .brief-source-count { display: none; }
   .brief-body { margin-top: var(--space-3); }
+  .brief-body.brief-body-tabs { display: block; margin-top: 0; }
+  .brief-body-tabs .tabs { margin-bottom: var(--space-3); }
+  .brief-body-tabs .brief-checklist > .section-heading { flex-wrap: wrap; }
+  .brief-body-tabs .brief-checklist > .section-heading > div:first-child { flex: 1 1 100%; }
   .brief-progress { width: 100%; min-width: 0; grid-template-columns: auto 1fr; text-align: left; }
   .brief-phase .brief-item-meta { padding-left: 0; }
   .brief-item-meta .brief-feedback { margin-left: 0; }

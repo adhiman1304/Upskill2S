@@ -47,6 +47,7 @@
 .ops-status-failed { color: var(--color-error); background: var(--color-error-bg); }
 
 @media (max-width: 899px) {
+  .ops-page .tab-panel > .ops-card:first-child { margin-top: 0; }
   .ops-refresh-all { justify-items: stretch; max-width: none; width: 100%; text-align: left; }
   .ops-job-detail td { padding-left: var(--space-2); }
   .ops-job-detail-grid { grid-template-columns: 1fr; }

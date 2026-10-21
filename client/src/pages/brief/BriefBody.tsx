@@ -1,5 +1,6 @@
 import { AlertTriangle, BookOpen, ClipboardCheck, ExternalLink, FileText, FolderGit2, GraduationCap, Headphones, Link2, ListChecks, MessagesSquare, MonitorPlay, Newspaper, Presentation, Route, Video } from 'lucide-react'
 import type { CommunityResource, KnownGap, LearningPathItem, StudyBriefDto } from '../../lib/contracts'
+import { Tabs } from '../../components/ui/Tabs'
 import { formatDate } from '../legacy/utils'
 import { formatMinutes, safeUrl } from './brief-utils'
 import { ChecklistSection } from './ChecklistSection'
@@ -11,10 +12,28 @@ const pathIcons: Record<LearningPathItem['type'], typeof Video> = { learning_pat
 const pathLabels: Record<LearningPathItem['type'], string> = { learning_path: 'Learning path', module: 'Module', docs: 'Docs', practice_assessment: 'Practice assessment', instructor_led: 'Instructor-led', exam_sandbox: 'Exam sandbox', other: 'Link' }
 const confidenceLabels: Record<KnownGap['confidence'], string> = { high: 'High confidence', medium: 'Medium confidence', low: 'Low confidence' }
 
-interface BriefBodyProps { brief: StudyBriefDto; completedItemIds: string[]; onToggle: (itemId: string, completed: boolean) => void }
+interface BriefBodyProps { brief: StudyBriefDto; mobile: boolean; completedItemIds: string[]; onToggle: (itemId: string, completed: boolean) => void }
 
-export function BriefBody({ brief, completedItemIds, onToggle }: BriefBodyProps) {
+export function BriefBody({ brief, mobile, completedItemIds, onToggle }: BriefBodyProps) {
   const { content } = brief
+  const learningPath = content.officialLearningPath.length > 0 && <LinkListSection title="Official learning path" description="From the exam provider." items={content.officialLearningPath.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: pathIcons[item.type], kindLabel: pathLabels[item.type], detail: item.notes, meta: formatMinutes(item.estimatedMinutes), sourceIds: item.sourceIds }))} itemType="learning_path" />
+  const community = content.communityResources.length > 0 && <LinkListSection title="Community resources" description="Recommended by the community; not official." items={content.communityResources.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: resourceIcons[item.kind], kindLabel: resourceLabels[item.kind], detail: item.whyRecommended, meta: [item.author, item.publishedAt ? formatDate(item.publishedAt) : null].filter(Boolean).join(' · '), sourceIds: item.sourceIds }))} itemType="resource" />
+
+  // Mobile: one mission per screen. The checklist is the default tab.
+  if (mobile) return <div className="brief-body brief-body-tabs">
+    <Tabs mode="tabs" label="Study brief sections" tabs={[
+      { id: 'checklist', label: 'Checklist', content: <ChecklistSection items={content.checklist} completedItemIds={completedItemIds} onToggle={onToggle} /> },
+      { id: 'overview', label: 'Overview', content: <div className="brief-tab-stack">
+        <SummarySection brief={brief} />
+        <ExamFacts brief={brief} />
+        {content.skillsMeasured.length > 0 && <SkillsSection brief={brief} />}
+      </div> },
+      { id: 'gaps', label: 'Gaps', content: content.knownGaps.length > 0 ? <GapsSection gaps={content.knownGaps} /> : <p className="empty-state">No known gaps were reported for this exam.</p> },
+      { id: 'resources', label: 'Resources', content: learningPath || community ? <div className="brief-tab-stack">{learningPath}{community}</div> : <p className="empty-state">No learning path or community resources in this brief.</p> },
+      { id: 'sources', label: 'Sources', content: <SourcesPanel brief={brief} collapsible={false} /> },
+    ]} />
+  </div>
+
   return <div className="brief-body">
     <SummarySection brief={brief} />
     <ExamFacts brief={brief} />
@@ -25,8 +44,8 @@ export function BriefBody({ brief, completedItemIds, onToggle }: BriefBodyProps)
       </div>
       <aside className="brief-aside">
         {content.skillsMeasured.length > 0 && <SkillsSection brief={brief} />}
-        {content.officialLearningPath.length > 0 && <LinkListSection title="Official learning path" description="From the exam provider." items={content.officialLearningPath.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: pathIcons[item.type], kindLabel: pathLabels[item.type], detail: item.notes, meta: formatMinutes(item.estimatedMinutes), sourceIds: item.sourceIds }))} itemType="learning_path" />}
-        {content.communityResources.length > 0 && <LinkListSection title="Community resources" description="Recommended by the community; not official." items={content.communityResources.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: resourceIcons[item.kind], kindLabel: resourceLabels[item.kind], detail: item.whyRecommended, meta: [item.author, item.publishedAt ? formatDate(item.publishedAt) : null].filter(Boolean).join(' · '), sourceIds: item.sourceIds }))} itemType="resource" />}
+        {learningPath}
+        {community}
         <SourcesPanel brief={brief} />
       </aside>
     </div>
@@ -113,11 +132,10 @@ function LinkListSection({ title, description, items, itemType }: { title: strin
   </section>
 }
 
-function SourcesPanel({ brief }: { brief: StudyBriefDto }) {
+function SourcesPanel({ brief, collapsible = true }: { brief: StudyBriefDto; collapsible?: boolean }) {
   const { sources } = brief.content
-  return <details className="brief-section brief-sources">
-    <summary><h2>Sources</h2> <span className="muted-inline">{sources.length} cited · generated {formatDate(brief.generatedAt)} with {brief.model}</span></summary>
-    <ol>
+  const heading = <><h2>Sources</h2> <span className="muted-inline">{sources.length} cited · generated {formatDate(brief.generatedAt)} with {brief.model}</span></>
+  const list = <ol>
       {sources.map((source) => {
         const href = safeUrl(source.url)
         return <li key={source.id}>
@@ -129,5 +147,9 @@ function SourcesPanel({ brief }: { brief: StudyBriefDto }) {
         </li>
       })}
     </ol>
+  if (!collapsible) return <section className="brief-section brief-sources is-flat"><div className="brief-sources-head">{heading}</div>{list}</section>
+  return <details className="brief-section brief-sources">
+    <summary>{heading}</summary>
+    {list}
   </details>
 }

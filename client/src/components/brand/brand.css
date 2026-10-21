@@ -1,0 +1,31 @@
+/* Brand lockup: mark + wordmark. Sizes are set with --brand-mark and --brand-text. */
+.brand.brand-lockup {
+  --brand-mark: 28px;
+  --brand-text: 20px;
+  display: inline-flex; align-items: center; gap: calc(var(--brand-mark) * 0.32);
+  color: var(--color-text); font-size: var(--brand-text); line-height: 1; text-decoration: none;
+}
+.brand.brand-sm { --brand-mark: 22px; --brand-text: 17px; }
+.brand.brand-md { --brand-mark: 28px; --brand-text: 20px; }
+.brand.brand-lg { --brand-mark: 36px; --brand-text: 26px; }
+
+/* Sign-in and setup screens render the default <Brand />; give them the large lockup. */
+.login-copy > .brand.brand-lockup, .setup-panel > .brand.brand-lockup { --brand-mark: 36px; --brand-text: 26px; }
+.setup-panel > .brand.brand-lockup { justify-self: start; }
+
+.brand-lockup .logo-mark { width: var(--brand-mark); height: var(--brand-mark); flex: none; display: block; }
+
+.wordmark {
+  display: inline-block; font-family: var(--font); font-weight: var(--weight-heading);
+  letter-spacing: -0.02em; line-height: 1; white-space: nowrap; color: inherit;
+  /* Optical: lowercase sits low; nudge so the x-height centres on the mark. */
+  transform: translateY(-0.04em);
+}
+.wordmark-i { position: relative; display: inline-block; }
+.wordmark-i-dot { color: var(--color-accent); }
+.wordmark-i-stem { position: absolute; left: 0; top: 0; color: inherit; }
+
+@media (max-width: 899px) {
+  .mobile-bar > .brand.brand-lockup:not(.brand-lg) { --brand-mark: 24px; --brand-text: 18px; }
+}
+

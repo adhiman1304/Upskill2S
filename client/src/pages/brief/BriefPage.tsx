@@ -8,6 +8,7 @@ import { getJob } from '../../lib/api/jobs'
 import type { BriefPageDto, BriefVersionSummary, FeedbackItemType, FeedbackVerdict, JobDto, StudyBriefDto } from '../../lib/contracts'
 import { usePolling } from '../../hooks/usePolling'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 import { formatDate, message } from '../legacy/utils'
 import { BriefViewContext, type BriefViewContextValue } from './brief-context'
 import { advanceFixtureJob, applyVote, createFixtureJob, isTerminal, sourceIndex } from './brief-utils'
@@ -34,6 +35,7 @@ export function BriefPage() {
 
 function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   const request = useApi()
+  const mobile = useIsMobile()
   const [page, setPage] = useState<BriefPageDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -152,6 +154,9 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   }, [currentBrief, fixture, id, request])
 
   const shownBrief = viewing ?? currentBrief
+  const checklist = shownBrief?.content.checklist ?? null
+  const completedIds = new Set(viewing ? [] : page?.progress.completedItemIds ?? [])
+  const progress = !checklist ? null : checklist.length ? Math.round((checklist.filter((item) => completedIds.has(item.id)).length / checklist.length) * 100) : 0
   useDocumentTitle(page ? `Study Brief: ${page.certification.code}` : 'Study Brief')
   const contextValue = useMemo<BriefViewContextValue>(() => ({
     sources: sourceIndex(shownBrief?.content.sources ?? []),
@@ -169,7 +174,7 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   return <div className="page-content page-wide brief-page">
     <Link className="back-link" to="/"><ArrowLeft size={16} /> Find a certification</Link>
     {fixture && <div className="alert warning"><FlaskConical size={15} /> Sample data: a hand-written DP-700 fixture for development. Nothing on this page is saved.</div>}
-    <BriefHeader page={page} fixture={fixture} refreshing={starting} jobRunning={jobActive} onRefresh={() => void startRefresh()} onOpenVersions={() => setVersionsOpen(true)} onFollowChange={changeFollow} />
+    <BriefHeader page={page} fixture={fixture} refreshing={starting} jobRunning={jobActive} onRefresh={() => void startRefresh()} onOpenVersions={() => setVersionsOpen(true)} onFollowChange={changeFollow} progress={progress} />
     {refreshIssue && <RefreshIssueCallout issue={refreshIssue} onDismiss={() => setRefreshIssue(null)} />}
     {job && <JobPanel job={job} onRetry={() => void startRefresh()} onDismiss={() => setJob(null)} />}
     {notice && <div className="alert success" role="status"><CheckCircle2 size={15} /> {notice}<button type="button" className="text-button" onClick={() => setNotice('')}>Dismiss</button></div>}
@@ -177,7 +182,7 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
     {viewing && <div className="alert">Viewing version {viewing.version} from {formatDate(viewing.generatedAt)} (read only).<button type="button" className="text-button" onClick={() => setViewing(null)}>Back to the current brief</button></div>}
     <BriefViewContext.Provider value={contextValue}>
       {shownBrief
-        ? <BriefBody brief={shownBrief} completedItemIds={viewing ? [] : page.progress.completedItemIds} onToggle={(itemId, completed) => void toggleItem(itemId, completed)} />
+        ? <BriefBody brief={shownBrief} mobile={mobile} completedItemIds={viewing ? [] : page.progress.completedItemIds} onToggle={(itemId, completed) => void toggleItem(itemId, completed)} />
         : !job && <EmptyBrief code={page.certification.code} starting={starting} onGenerate={() => void startRefresh()} />}
     </BriefViewContext.Provider>
     {versionsOpen && <VersionsDrawer load={loadVersions} viewingId={viewing?.id ?? null} onSelect={(version) => void selectVersion(version)} onClose={() => setVersionsOpen(false)} />}

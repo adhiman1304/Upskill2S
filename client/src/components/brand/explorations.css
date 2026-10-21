@@ -1,0 +1,10 @@
+/* Dev-only explorations gallery (?brand=1) */
+.brand-explorations { max-width: 760px; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+.brand-explorations h1 { font-size: var(--text-lg); margin: 0 0 var(--space-1); }
+.brand-exploration { display: grid; grid-template-columns: 260px 1fr; gap: var(--space-5); align-items: center; padding: var(--space-4) 0; border-top: 1px solid var(--color-border); }
+.brand-exploration p { margin: var(--space-1) 0 0; }
+.brand-exploration-sizes { display: flex; align-items: center; gap: var(--space-4); }
+.brand-exploration-dark { display: inline-grid; padding: var(--space-2); border-radius: var(--radius); background: var(--color-text); }
+.brand-explorations-overlay { position: fixed; z-index: 100; inset: 0; overflow-y: auto; background: var(--color-bg); color: var(--color-text); font-size: var(--text-base); line-height: var(--leading); }
+/* Every Brand instance portals the gallery; show only the first. */
+.brand-explorations-overlay ~ .brand-explorations-overlay { display: none; }

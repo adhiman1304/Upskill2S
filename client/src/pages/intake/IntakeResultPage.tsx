@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw } from 'lucide-react'
 import { usePolling } from '../../hooks/usePolling'
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
+import { useIsMobile } from '../../hooks/useMediaQuery'
 import { ApiError } from '../../lib/api/client'
 import { getIntake, selectRecommendation } from '../../lib/api/intake'
 import { getJob } from '../../lib/api/jobs'
@@ -30,6 +31,7 @@ export function IntakeResultPage() {
   const { id = '' } = useParams()
   const request = useApi()
   const navigate = useNavigate()
+  const mobile = useIsMobile()
   // State is keyed by intake id so it resets when the route switches to another intake. The fetcher stores the
   // session itself: stopping the poll (settled) can unmount usePolling's tick before it records `data`.
   const [notFoundId, setNotFoundId] = useState<string | null>(null)
@@ -109,13 +111,15 @@ export function IntakeResultPage() {
   }
 
   const result = current.result
+  const profile = <section className="intake-profile" aria-labelledby="intake-profile-heading">
+    <h2 id="intake-profile-heading" className={mobile ? 'sr-only' : undefined}>Your profile</h2>
+    <p className="intake-profile-summary">{result.profileSummary}</p>
+    {result.detectedSkills.length > 0 && <div className="intake-chips" aria-label="Detected skills">{result.detectedSkills.map((skill) => <span key={skill} className="intake-skill">{skill}</span>)}</div>}
+    {result.goals.length > 0 && <div className="intake-goals"><strong>Goals</strong><ul>{result.goals.map((goal) => <li key={goal}>{goal}</li>)}</ul></div>}
+  </section>
   return <div className="page-content intake-page">{header}
-    <section className="intake-profile" aria-labelledby="intake-profile-heading">
-      <h2 id="intake-profile-heading">Your profile</h2>
-      <p className="intake-profile-summary">{result.profileSummary}</p>
-      {result.detectedSkills.length > 0 && <div className="intake-chips" aria-label="Detected skills">{result.detectedSkills.map((skill) => <span key={skill} className="intake-skill">{skill}</span>)}</div>}
-      {result.goals.length > 0 && <div className="intake-goals"><strong>Goals</strong><ul>{result.goals.map((goal) => <li key={goal}>{goal}</li>)}</ul></div>}
-    </section>
+    {/* Mobile: recommendations first; the profile summary sits behind "What we understood" below them. */}
+    {!mobile && profile}
 
     {selectError && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{selectError}</div>}
 
@@ -149,6 +153,8 @@ export function IntakeResultPage() {
         })}
       </ol>
     </section>
+
+    {mobile && <details className="disclosure intake-understood"><summary>What we understood</summary>{profile}</details>}
 
     {result.followUpQuestions.length > 0 && <section className="section intake-followups" aria-labelledby="intake-followups-heading">
       <div className="section-heading"><div><h2 id="intake-followups-heading">Sharpen these recommendations</h2><p>Answering these would help us suggest a better fit.</p></div></div>
