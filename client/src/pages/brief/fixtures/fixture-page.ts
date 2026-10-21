@@ -1,6 +1,6 @@
 // SAMPLE DATA (development only). Builds a BriefPageDto around the DP-700 fixture brief for `?fixture=1`.
 import type { BriefPageDto } from '../../../lib/contracts'
-import type { BriefVersionSummary } from '../../../lib/api/briefs'
+import type { BriefVersionSummary } from '../../../lib/contracts'
 import { dp700SampleBrief } from './dp-700.sample'
 
 const generatedAt = '2026-10-18T09:45:00.000Z'

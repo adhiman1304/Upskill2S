@@ -9,18 +9,14 @@ import { prisma } from '../database.js'
 import { intakeAttachmentSchema, intakeResultSchema, intakeStatusSchema, type IntakeAttachment, type IntakeSessionDto } from '../lib/contracts/index.js'
 import { currentUser, isAdmin } from '../lib/permissions.js'
 import { requireAuth } from '../middleware/requireAuth.js'
-import { resolveCertification } from '../services/catalog/index.js'
+import { CatalogInputError, resolveCertification } from '../services/catalog/index.js'
 import { combineExtractedText, extractText, IntakeFileError, isSupportedIntakeFileName, type ExtractedFile } from '../services/intake/extract.js'
-import { recoverInterruptedIntakeSessions } from '../services/intake/index.js'
 import { enqueueJob } from '../services/jobs/queue.js'
 
 export const intakeRouter = Router()
 
 const MAX_INPUT_TEXT_CHARS = 20_000
 const routeParam = (value: string | string[] | undefined) => typeof value === 'string' ? value : value?.[0] ?? ''
-
-// Sessions left RUNNING by a previous process can never finish. The job queue fails their jobs on boot; this does the same for the sessions.
-void recoverInterruptedIntakeSessions().catch((error: unknown) => console.error('Could not recover interrupted intake sessions:', error))
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -144,16 +140,21 @@ intakeRouter.post('/intake/:id/select', requireAuth, async (request, response) =
   if (!loaded) return
   const recommendation = parseResult(loaded.session.result)?.recommendations[parsed.data.recommendationIndex]
   if (loaded.session.status !== 'SUCCEEDED' || !recommendation) { response.status(404).json({ error: 'Recommendation not found.' }); return }
+  // Model output may use a spaced name as the code (for example Google exams); turn it into a slug the catalog accepts.
+  const code = recommendation.code.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9._-]/g, '').replace(/^[^A-Za-z0-9]+/, '').slice(0, 40)
   try {
     const certification = await resolveCertification({
       provider: recommendation.provider.trim().slice(0, 80),
-      code: recommendation.code.trim().slice(0, 40),
+      code,
       title: recommendation.title.trim().slice(0, 160),
       officialUrl: recommendation.officialUrl?.startsWith('https://') ? recommendation.officialUrl.slice(0, 2048) : null,
     }, loaded.user.id)
     response.json({ certificationId: certification.id })
   } catch (error) {
-    if (error instanceof Error && /not implemented/i.test(error.message)) { response.status(503).json({ error: 'Catalog is not ready yet.', code: 'NOT_IMPLEMENTED' }); return }
+    if (error instanceof CatalogInputError) {
+      response.status(422).json({ error: `This recommendation could not be added to the catalog (${error.message}). Search for it on the home page instead.`, code: 'INVALID_REQUEST' })
+      return
+    }
     throw error
   }
 })

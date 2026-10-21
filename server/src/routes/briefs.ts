@@ -13,6 +13,7 @@ import {
   slugIdSchema,
   studyBriefContentSchema,
   type ApiErrorBody,
+  type BriefVersionSummary,
   type BriefPageDto,
   type FeedbackItemType,
   type FeedbackVerdict,
@@ -198,7 +199,7 @@ briefsRouter.get('/certifications/:id/brief/versions', requireAuth, async (reque
     orderBy: { version: 'desc' },
     select: { id: true, version: true, status: true, model: true, sourceCount: true, generatedAt: true },
   })
-  response.json(rows.map((row) => ({ id: row.id, version: row.version, status: row.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'CURRENT', model: row.model, sourceCount: row.sourceCount, generatedAt: row.generatedAt.toISOString() })))
+  response.json(rows.map((row): BriefVersionSummary => ({ id: row.id, version: row.version, status: row.status === 'SUPERSEDED' ? 'SUPERSEDED' : 'CURRENT', model: row.model, sourceCount: row.sourceCount, generatedAt: row.generatedAt.toISOString() })))
 })
 
 // GET /certifications/:id/brief/versions/:briefId -> StudyBriefDto

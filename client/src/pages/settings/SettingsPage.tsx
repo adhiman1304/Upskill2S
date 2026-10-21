@@ -114,8 +114,8 @@ export function SettingsPage() {
           <div><h2 id="models-heading">Models</h2><p>Configured by the server administrator.</p></div>
         </div>
         <dl className="model-list">
-          <div><dt>Research</dt><dd><code>{status.models.research}</code><small>Web research and study brief structuring</small></dd></div>
-          <div><dt>Fast</dt><dd><code>{status.models.fast}</code><small>Quick tasks such as recommendations</small></dd></div>
+          <div><dt>Research</dt><dd><code>{status.models.research}</code><small>Web research, study brief structuring and intake recommendations</small></dd></div>
+          <div><dt>Fast</dt><dd><code>{status.models.fast}</code><small>Reserved for quick tasks; not used by any job yet</small></dd></div>
         </dl>
         <p className="server-key-line"><Server size={14} aria-hidden="true" /> {status.serverKeyAvailable ? 'A company key is configured for scheduled refreshes.' : 'No company key is configured, so stale briefs are not refreshed automatically.'}</p>
       </section>}

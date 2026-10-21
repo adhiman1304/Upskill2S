@@ -3,6 +3,7 @@ import { prisma } from '../../database.js'
 import type { JobDto, JobKind, JobProgressEntry } from '../../lib/contracts/index.js'
 import { MissingApiKeyError } from '../openai/client.js'
 import { jobDto, parseJobProgress } from './dto.js'
+import { withChildSignal } from '../../lib/abort.js'
 
 export type { JobKind } from '../../lib/contracts/index.js'
 
@@ -155,7 +156,11 @@ function userSafeError(error: unknown, signal: AbortSignal) {
 }
 
 async function runJob(row: { id: string; kind: string; requestedById: string; certificationId: string | null; intakeSessionId: string | null; useServerKey: boolean; progress: string }) {
-  const signal = shutdownController.signal
+  // One listener per running job on the shared shutdown signal; handlers derive per-call signals from this one.
+  await withChildSignal(shutdownController.signal, (signal) => runJobWithSignal(row, signal))
+}
+
+async function runJobWithSignal(row: { id: string; kind: string; requestedById: string; certificationId: string | null; intakeSessionId: string | null; useServerKey: boolean; progress: string }, signal: AbortSignal) {
   const log = createLogger(row.id, parseJobProgress(row.progress))
   const handler = handlers.get(row.kind as JobKind)
   try {

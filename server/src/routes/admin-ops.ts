@@ -11,10 +11,7 @@ import { jobDto, parseJobProgress } from '../services/jobs/dto.js'
 import { getServerOpenAIClient } from '../services/openai/client.js'
 import { getOpsSummary } from '../services/ops/metrics.js'
 import { findStaleCertifications } from '../services/ops/stale.js'
-import { MAX_REFRESH_LIMIT, ServerKeyMissingError, refreshStaleBriefs, startScheduler } from '../services/scheduler/index.js'
-
-// Integrator: move this call into server/src/index.ts next to startJobWorker() (see docs/handoff/E.md).
-if (config.schedulerEnabled) startScheduler()
+import { MAX_REFRESH_LIMIT, ServerKeyMissingError, refreshStaleBriefs } from '../services/scheduler/index.js'
 
 export const adminOpsRouter = Router()
 

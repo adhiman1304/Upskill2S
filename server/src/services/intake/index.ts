@@ -5,6 +5,7 @@ import { intakeResultSchema, type IntakeResult } from '../../lib/contracts/index
 import { UserFacingJobError, type JobContext } from '../jobs/queue.js'
 import { getOpenAIClientForUser, getServerOpenAIClient, MissingApiKeyError, openAiModels } from '../openai/client.js'
 import { buildIntakeInput, INTAKE_INSTRUCTIONS } from './prompts.js'
+import { withChildSignal } from '../../lib/abort.js'
 
 /** Flip to 'fast' to trade recommendation quality for speed and cost. */
 const INTAKE_MODEL_TIER: 'research' | 'fast' = 'research'
@@ -40,12 +41,12 @@ export async function runIntakeRecommendation(ctx: JobContext): Promise<{ inputT
     const client = ctx.useServerKey ? getServerOpenAIClient() : await getOpenAIClientForUser(ctx.requestedById)
     if (!client) throw new UserFacingJobError('No server OpenAI key is configured.')
     await ctx.log(`Analyzing your profile with ${model}.`)
-    const response = await client.responses.parse({
+    const response = await withChildSignal(ctx.signal, (signal) => client.responses.parse({
       model,
       instructions: INTAKE_INSTRUCTIONS,
       input: buildIntakeInput(session.inputText, session.extractedText),
       text: { format: zodTextFormat(intakeResultSchema, 'intake_result') },
-    }, { signal: ctx.signal })
+    }, { signal }))
     if (!response.output_parsed) throw new UserFacingJobError('The model did not return recommendations. Try again.')
     const checked = intakeResultSchema.safeParse(response.output_parsed)
     if (!checked.success) throw new UserFacingJobError('The model returned recommendations in an unexpected format. Try again.')

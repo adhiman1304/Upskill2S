@@ -1,14 +1,10 @@
 // Admin operations API (workstream E). Mirrors server/src/routes/admin-ops.ts and server/src/services/{ops,scheduler}.
 import type { AuthenticatedRequest } from './client'
-import type { JobDto } from '../contracts'
+import type { JobDto, JobKind, JobStatus } from '../contracts'
 
-export type JobKind = JobDto['kind']
-export type JobStatus = JobDto['status']
+export type { JobKind, JobStatus }
 export const jobKinds: JobKind[] = ['BRIEF', 'REFRESH', 'INTAKE']
 export const jobStatuses: JobStatus[] = ['QUEUED', 'RUNNING', 'SUCCEEDED', 'FAILED', 'CANCELLED']
-
-/** Error codes specific to the admin ops routes (in addition to the shared `ApiErrorCode`s). */
-export type AdminOpsErrorCode = 'SERVER_KEY_MISSING' | 'JOB_NOT_CANCELLABLE' | 'NOT_FOUND' | 'FORBIDDEN' | 'INVALID_REQUEST'
 
 export interface TokenTotals { input: number; output: number }
 

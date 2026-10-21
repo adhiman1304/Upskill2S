@@ -6,6 +6,7 @@ import { UserFacingJobError } from '../jobs/queue.js'
 import { isBlockedUrl } from './filters.js'
 import { repairInput, STRUCTURE_INSTRUCTIONS, structureInput, type CertificationSubject } from './prompts.js'
 import { addUsage, emptyUsage, usageOf, type TokenUsage } from './usage.js'
+import { withChildSignal } from '../../lib/abort.js'
 
 /** The brief JSON is large (often 8-15k tokens) and reasoning tokens count toward this cap. */
 const STRUCTURE_MAX_OUTPUT_TOKENS = 48_000
@@ -95,14 +96,14 @@ export async function structureBrief(options: StructureOptions): Promise<{ conte
   let usage = emptyUsage()
 
   const call = async (input: OpenAI.Responses.ResponseInput) => {
-    const response = await options.client.responses.create({
+    const response = await withChildSignal(options.signal, (signal) => options.client.responses.create({
       model: options.model,
       instructions: STRUCTURE_INSTRUCTIONS,
       input,
       text: { format },
       max_output_tokens: STRUCTURE_MAX_OUTPUT_TOKENS,
       store: false,
-    }, { signal: options.signal })
+    }, { signal }))
     usage = addUsage(usage, usageOf(response))
     const refusal = refusalOf(response)
     if (refusal) throw new UserFacingJobError('The model declined to structure this brief. Try refreshing again.')

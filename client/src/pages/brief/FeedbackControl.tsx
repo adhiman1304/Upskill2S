@@ -1,5 +1,5 @@
 import { Check, Clock, X } from 'lucide-react'
-import type { FeedbackItemType, FeedbackVerdict } from '../../lib/api/briefs'
+import type { FeedbackItemType, FeedbackVerdict } from '../../lib/contracts'
 import { useBriefView } from './brief-context'
 import { emptyFeedback, safeUrl } from './brief-utils'
 

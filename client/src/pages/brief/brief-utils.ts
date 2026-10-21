@@ -1,6 +1,6 @@
 // Non-component helpers for the study brief page (kept out of .tsx files for react-refresh).
-import type { BriefPageDto, BriefSource, ChecklistItem, FreshnessStatus, JobDto } from '../../lib/contracts'
-import type { FeedbackSummary, FeedbackVerdict } from '../../lib/api/briefs'
+import type { BriefPageDto, BriefSource, ChecklistItem, FeedbackVerdict, FreshnessStatus, JobDto } from '../../lib/contracts'
+import type { FeedbackSummary } from '../../lib/api/briefs'
 
 /** Returns the URL only when it is an absolute HTTPS URL; anything else is not rendered as a link. */
 export function safeUrl(value: string | null | undefined) {

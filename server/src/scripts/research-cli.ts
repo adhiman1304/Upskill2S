@@ -1,6 +1,6 @@
 // Research CLI: runs the brief pipeline for one certification without the job worker.
 //
-//   npm --prefix server run research -- --code DP-700 --provider Microsoft [--title "..."] [--official-url https://...] [--model gpt-5] [--key sk-...]
+//   npm --prefix server run research -- --code DP-700 --provider Microsoft [--title "..."] [--official-url https://...] [--model gpt-6.1-sol] [--key sk-...]
 //
 // The key comes from --key or OPENAI_API_KEY and is used only for this process; it is never stored.
 // The brief JSON is printed to stdout and saved as a new CURRENT StudyBrief version.
@@ -10,7 +10,7 @@ import { prisma } from '../database.js'
 import { normalizeKey } from '../lib/validation.js'
 import { researchBrief } from '../services/research/index.js'
 
-const usage = 'Usage: npm --prefix server run research -- --code DP-700 --provider Microsoft [--title "..."] [--official-url https://...] [--model gpt-5] [--key sk-...]'
+const usage = 'Usage: npm --prefix server run research -- --code DP-700 --provider Microsoft [--title "..."] [--official-url https://...] [--model gpt-6.1-sol] [--key sk-...]'
 
 async function main() {
   const { values } = parseArgs({

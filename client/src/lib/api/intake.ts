@@ -1,5 +1,5 @@
 import type { AuthenticatedRequest } from './client'
-import type { IntakeSessionDto, JobDto } from '../contracts'
+import type { IntakeSessionDto } from '../contracts'
 
 /** POST /api/intake (multipart). Field `text` plus up to 3 files in `files[]`. Responds 202 with the queued session. */
 export function createIntake(request: AuthenticatedRequest, input: { text: string; files: File[] }) {
@@ -19,9 +19,4 @@ export function listMyIntakes(request: AuthenticatedRequest) {
 
 export function selectRecommendation(request: AuthenticatedRequest, id: string, recommendationIndex: number) {
   return request<{ certificationId: string }>(`/api/intake/${encodeURIComponent(id)}/select`, { method: 'POST', body: JSON.stringify({ recommendationIndex }) })
-}
-
-/** Workstream B owns lib/api/jobs.ts; this local copy keeps intake independent until integration. */
-export function getIntakeJob(request: AuthenticatedRequest, jobId: string) {
-  return request<JobDto>(`/api/jobs/${encodeURIComponent(jobId)}`)
 }

@@ -175,6 +175,10 @@ export const studyBriefDtoSchema = z.object({
 })
 export type StudyBriefDto = z.infer<typeof studyBriefDtoSchema>
 
+/** One row of GET /certifications/:id/brief/versions (newest first). */
+export const briefVersionSummarySchema = studyBriefDtoSchema.omit({ certificationId: true, content: true })
+export type BriefVersionSummary = z.infer<typeof briefVersionSummarySchema>
+
 export const feedbackVerdictSchema = z.enum(['accurate', 'inaccurate', 'outdated'])
 export type FeedbackVerdict = z.infer<typeof feedbackVerdictSchema>
 export const feedbackItemTypeSchema = z.enum(['brief', 'checklist', 'gap', 'resource', 'skill', 'learning_path'])

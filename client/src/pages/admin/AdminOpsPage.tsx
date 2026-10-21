@@ -10,7 +10,7 @@ import { SummaryTiles } from './SummaryTiles'
 import './admin-ops.css'
 
 function errorText(error: unknown, fallback: string) {
-  if (error instanceof ApiError && (error.code as string | undefined) === 'SERVER_KEY_MISSING') return 'The server has no OPENAI_SERVER_API_KEY, so briefs cannot be refreshed with the company key.'
+  if (error instanceof ApiError && error.code === 'SERVER_KEY_MISSING') return 'The server has no OPENAI_SERVER_API_KEY, so briefs cannot be refreshed with the company key.'
   return error instanceof Error ? error.message : fallback
 }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ExternalLink, History, LoaderCircle, RefreshCw } from 'lucide-react'
-import type { BriefPageDto } from '../../lib/contracts'
-import type { Following, FollowStatus } from '../../lib/api/briefs'
+import type { Following } from '../../lib/api/briefs'
+import type { BriefPageDto, FollowStatus } from '../../lib/contracts'
 import { freshnessLabel, safeUrl } from './brief-utils'
 
 interface BriefHeaderProps {

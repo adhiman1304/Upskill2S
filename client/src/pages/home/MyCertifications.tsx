@@ -8,6 +8,8 @@ import { ProviderLogo } from '../legacy/providers'
 import { formatDate, message } from '../legacy/utils'
 import { FreshnessChip } from './FreshnessChip'
 
+const followLabels = { PLANNING: 'Planning', STUDYING: 'Studying', PASSED: 'Passed' } as const
+
 /** Followed certifications first, then recently researched ones (empty-query search). */
 export function MyCertifications() {
   const request = useApi()
@@ -29,7 +31,7 @@ export function MyCertifications() {
         <Link className="mine-row" to={`/certifications/${encodeURIComponent(item.certificationId ?? '')}`}>
           <span className="provider-logo home-logo"><ProviderLogo name={item.provider} /></span>
           <span className="mine-text"><strong>{item.code} <span className="mine-provider">{item.provider}</span></strong><span>{item.title}</span></span>
-          <span className="mine-meta"><FreshnessChip status={item.briefStatus} /><small>{item.lastResearchedAt ? `Researched ${formatDate(item.lastResearchedAt)}` : 'Not researched yet'}</small></span>
+          <span className="mine-meta">{item.following && <small>{followLabels[item.following.status]}</small>}<FreshnessChip status={item.briefStatus} /><small>{item.lastResearchedAt ? `Researched ${formatDate(item.lastResearchedAt)}` : 'Not researched yet'}</small></span>
           <ArrowUpRight className="row-arrow" size={17} aria-hidden="true" />
         </Link>
       </li>)}</ul>

@@ -14,7 +14,8 @@
     "db:generate": "prisma generate --config prisma.config.ts",
     "db:migrate": "prisma migrate dev --config prisma.config.ts",
     "db:seed": "tsx ../prisma/seed/seed.ts",
-    "research": "tsx src/scripts/research-cli.ts"
+    "research": "tsx src/scripts/research-cli.ts",
+    "seed:sample-brief": "tsx src/scripts/seed-sample-brief.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.15",

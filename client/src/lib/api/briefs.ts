@@ -1,13 +1,9 @@
 // Study brief API (workstream B). Each function takes the authenticated `request` from `useApi()` first.
 import type { AuthenticatedRequest } from './client'
-import type { BriefPageDto, JobDto, StudyBriefDto } from '../contracts'
+import type { BriefPageDto, BriefVersionSummary, FeedbackItemType, FeedbackVerdict, FollowStatus, JobDto, StudyBriefDto } from '../contracts'
 
-export type FeedbackVerdict = 'accurate' | 'inaccurate' | 'outdated'
-export type FeedbackItemType = 'brief' | 'checklist' | 'gap' | 'resource' | 'skill' | 'learning_path'
 export type FeedbackSummary = BriefPageDto['feedback'][string]
 export type Following = BriefPageDto['following']
-export type FollowStatus = NonNullable<Following>['status']
-export interface BriefVersionSummary { id: string; version: number; status: 'CURRENT' | 'SUPERSEDED'; model: string; sourceCount: number; generatedAt: string }
 
 const certPath = (certificationId: string) => `/api/certifications/${encodeURIComponent(certificationId)}`
 

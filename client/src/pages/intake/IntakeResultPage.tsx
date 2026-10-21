@@ -3,7 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react'
 import { usePolling } from '../../hooks/usePolling'
 import { ApiError } from '../../lib/api/client'
-import { getIntake, getIntakeJob, selectRecommendation } from '../../lib/api/intake'
+import { getIntake, selectRecommendation } from '../../lib/api/intake'
+import { getJob } from '../../lib/api/jobs'
 import type { IntakeRecommendation, IntakeSessionDto } from '../../lib/contracts'
 import { useApi } from '../../session'
 import { formatDate, message } from '../legacy/utils'
@@ -46,7 +47,7 @@ export function IntakeResultPage() {
   }, 2000, Boolean(id) && !loadFailed && !settled)
   const running = !current || isActive(current.status)
   const jobId = current?.jobId ?? null
-  const { data: job } = usePolling(() => getIntakeJob(request, jobId!), 2000, Boolean(jobId) && running)
+  const { data: job } = usePolling(() => getJob(request, jobId!), 2000, Boolean(jobId) && running)
   const [selecting, setSelecting] = useState<number | null>(null)
   const [selectError, setSelectError] = useState<string | null>(null)
 

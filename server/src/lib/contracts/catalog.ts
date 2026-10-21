@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { freshnessStatusSchema } from './brief.js'
+import { followStatusSchema, freshnessStatusSchema } from './brief.js'
 
 export const catalogHitDtoSchema = z.object({
   certificationId: z.string().nullable(),
@@ -10,6 +10,8 @@ export const catalogHitDtoSchema = z.object({
   source: z.enum(['db', 'catalog']),
   briefStatus: freshnessStatusSchema,
   lastResearchedAt: z.string().nullable(),
+  /** The requesting user's follow of this certification (always null for catalog-only hits). */
+  following: z.object({ status: followStatusSchema }).nullable(),
 })
 export type CatalogHitDto = z.infer<typeof catalogHitDtoSchema>
 

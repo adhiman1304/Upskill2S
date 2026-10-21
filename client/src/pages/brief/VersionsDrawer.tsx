@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { LoaderCircle, X } from 'lucide-react'
-import type { BriefVersionSummary } from '../../lib/api/briefs'
+import type { BriefVersionSummary } from '../../lib/contracts'
 import { formatDate, message } from '../legacy/utils'
 
 interface VersionsDrawerProps {

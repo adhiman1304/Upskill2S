@@ -167,7 +167,8 @@ router.get('/community/leaderboard', async (request, response) => {
   }
   for (const row of comments) totalsFor(row.authorId).comments += row._count._all
   for (const resource of helpfulResources) totalsFor(resource.createdById).helpfulReceived += resource._count.helpfulVotes
-  const members = await prisma.user.findMany({ where: { id: { in: [...totals.keys()] } }, select: { id: true, objectId: true, displayName: true } })
+  // The system user owns the seeded catalog; it is not a contributor.
+  const members = await prisma.user.findMany({ where: { id: { in: [...totals.keys()] }, NOT: { tenantId: 'system' } }, select: { id: true, objectId: true, displayName: true } })
   const ranked = members.flatMap((member) => {
     const memberTotals = totals.get(member.id)
     if (!memberTotals) return []
@@ -275,7 +276,7 @@ router.post('/certifications/:id/resources', upload.single('file'), async (reque
   if (file) {
     const isPdf = file.mimetype === 'application/pdf' && file.originalname.toLocaleLowerCase().endsWith('.pdf') && file.buffer.subarray(0, 5).toString('ascii') === '%PDF-'
     const title = typeof request.body.title === 'string' ? request.body.title.trim().slice(0, 120) : ''
-    let topics: unknown = []
+    let topics: unknown
     try { topics = JSON.parse(typeof request.body.topics === 'string' ? request.body.topics : '[]') } catch { topics = null }
     const metadata = resourceMetadataSchema.safeParse({
       topics,

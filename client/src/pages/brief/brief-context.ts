@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { BriefPageDto, BriefSource } from '../../lib/contracts'
-import type { FeedbackItemType, FeedbackVerdict } from '../../lib/api/briefs'
+import type { FeedbackItemType, FeedbackVerdict } from '../../lib/contracts'
 
 export interface BriefViewContextValue {
   sources: Map<string, { n: number; source: BriefSource }>

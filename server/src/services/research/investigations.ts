@@ -4,6 +4,7 @@ import { config } from '../../config.js'
 import { investigationInput, investigationInstructions, investigationTitles, type CertificationSubject, type InvestigationKey } from './prompts.js'
 import { extractCitedSources, officialHostsFor } from './sources.js'
 import { usageOf, type TokenUsage } from './usage.js'
+import { withChildSignal } from '../../lib/abort.js'
 
 export const INVESTIGATION_KEYS: readonly InvestigationKey[] = ['officialExam', 'learningPath', 'communityGaps', 'thirdPartyResources']
 
@@ -61,7 +62,7 @@ export async function runInvestigation(key: InvestigationKey, maxToolCalls: numb
       max_output_tokens: INVESTIGATION_MAX_OUTPUT_TOKENS,
       store: false,
     }
-    return options.client.responses.create(body, { signal: options.signal })
+    return withChildSignal(options.signal, (signal) => options.client.responses.create(body, { signal }))
   }
 
   let response: OpenAI.Responses.Response

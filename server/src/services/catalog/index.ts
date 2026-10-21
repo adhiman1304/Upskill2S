@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs'
 import { Prisma } from '../../generated/prisma/client.js'
 import { config } from '../../config.js'
 import { prisma } from '../../database.js'
-import { catalogSeedEntrySchema, type CatalogHitDto, type CatalogSeedEntry, type FreshnessStatus, type ResolveCertificationInput } from '../../lib/contracts/index.js'
-import { normalizeKey } from '../../lib/validation.js'
+import { catalogSeedEntrySchema, followStatusSchema, resolveCertificationInputSchema, type CatalogHitDto, type CatalogSeedEntry, type FollowStatus, type FreshnessStatus, type ResolveCertificationInput } from '../../lib/contracts/index.js'
+import { certificationSchema, normalizeKey } from '../../lib/validation.js'
 
 const SEARCH_LIMIT = 15
 const MINE_LIMIT = 12
@@ -104,9 +104,25 @@ async function currentBriefDates(certificationIds: string[]) {
   return dates
 }
 
+/** The user's follow status per certification. */
+async function followStatuses(userId: string, certificationIds: string[]) {
+  if (!certificationIds.length) return new Map<string, FollowStatus>()
+  const rows = await prisma.userCertification.findMany({
+    where: { userId, certificationId: { in: certificationIds } },
+    select: { certificationId: true, status: true },
+  })
+  const statuses = new Map<string, FollowStatus>()
+  for (const row of rows) {
+    const parsed = followStatusSchema.safeParse(row.status)
+    if (parsed.success) statuses.set(row.certificationId, parsed.data)
+  }
+  return statuses
+}
+
 type CertificationRow = { id: string; provider: string; code: string; title: string; officialUrl: string | null; lastResearchedAt: Date | null }
 
-function dbHit(row: CertificationRow, briefDates: Map<string, Date>): CatalogHitDto {
+function dbHit(row: CertificationRow, briefDates: Map<string, Date>, follows: Map<string, FollowStatus>): CatalogHitDto {
+  const followStatus = follows.get(row.id)
   return {
     certificationId: row.id,
     provider: row.provider,
@@ -116,11 +132,12 @@ function dbHit(row: CertificationRow, briefDates: Map<string, Date>): CatalogHit
     source: 'db',
     briefStatus: freshnessOf(briefDates.get(row.id)),
     lastResearchedAt: row.lastResearchedAt?.toISOString() ?? null,
+    following: followStatus ? { status: followStatus } : null,
   }
 }
 
 function catalogHit(entry: CatalogSeedEntry): CatalogHitDto {
-  return { certificationId: null, provider: entry.provider, code: entry.code, title: entry.title, officialUrl: entry.officialUrl, source: 'catalog', briefStatus: 'missing', lastResearchedAt: null }
+  return { certificationId: null, provider: entry.provider, code: entry.code, title: entry.title, officialUrl: entry.officialUrl, source: 'catalog', briefStatus: 'missing', lastResearchedAt: null, following: null }
 }
 
 /**
@@ -182,8 +199,9 @@ export async function searchCatalog(query: string, userId: string): Promise<Cata
 
   ranked.sort((a, b) => a.rank - b.rank || b.researched - a.researched || (a.source === b.source ? 0 : a.source === 'db' ? -1 : 1) || a.code.localeCompare(b.code))
   const top = ranked.slice(0, SEARCH_LIMIT)
-  const briefDates = await currentBriefDates(top.flatMap((item) => (item.row ? [item.row.id] : [])))
-  return top.map((item) => (item.row ? dbHit(item.row, briefDates) : catalogHit(item.entry!)))
+  const ids = top.flatMap((item) => (item.row ? [item.row.id] : []))
+  const [briefDates, follows] = await Promise.all([currentBriefDates(ids), followStatuses(userId, ids)])
+  return top.map((item) => (item.row ? dbHit(item.row, briefDates, follows) : catalogHit(item.entry!)))
 }
 
 async function myCertifications(userId: string): Promise<CatalogHitDto[]> {
@@ -204,8 +222,9 @@ async function myCertifications(userId: string): Promise<CatalogHitDto[]> {
     })
     rows.push(...recent)
   }
-  const briefDates = await currentBriefDates(rows.map((row) => row.id))
-  return rows.map((row) => dbHit(row, briefDates))
+  const ids = rows.map((row) => row.id)
+  const [briefDates, follows] = await Promise.all([currentBriefDates(ids), followStatuses(userId, ids)])
+  return rows.map((row) => dbHit(row, briefDates, follows))
 }
 
 // --- resolve ------------------------------------------------------------------------------------
@@ -267,7 +286,41 @@ export async function findOrCreateCertification(input: ResolveCertificationInput
   }
 }
 
+/** Thrown by `resolveCertification` when the input fails `resolveCertificationRequestSchema`; the message is safe to show. */
+export class CatalogInputError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'CatalogInputError'
+  }
+}
+
+// Mirrors the provider/code/title rules of the legacy certificationSchema so resolved rows stay editable there,
+// and only accepts HTTPS official links.
+export const resolveCertificationRequestSchema = resolveCertificationInputSchema.extend({
+  provider: certificationSchema.shape.provider,
+  code: certificationSchema.shape.code,
+  title: certificationSchema.shape.title,
+  officialUrl: resolveCertificationInputSchema.shape.officialUrl.refine(
+    (value) => !value || /^https:\/\/[^\s]+$/i.test(value),
+    'Official links must use HTTPS.',
+  ),
+})
+
+/** Validates resolve input and returns either the parsed value or a user-facing error message. */
+export function parseResolveInput(input: unknown): { ok: true; data: ResolveCertificationInput } | { ok: false; error: string } {
+  const parsed = resolveCertificationRequestSchema.safeParse(input)
+  if (parsed.success) return { ok: true, data: parsed.data }
+  const issue = parsed.error.issues[0]
+  const error = issue?.path[0] === 'code' && issue.code === 'invalid_format'
+    ? 'Exam codes may only contain letters, numbers, dots, dashes and underscores.'
+    : issue ? `${issue.path.join('.') || 'body'}: ${issue.message}` : 'Invalid certification.'
+  return { ok: false, error }
+}
+
+/** Validated find-or-create. Throws `CatalogInputError` for invalid input. */
 export async function resolveCertification(input: ResolveCertificationInput, userId: string): Promise<{ id: string }> {
-  const { id } = await findOrCreateCertification(input, userId)
+  const parsed = parseResolveInput(input)
+  if (!parsed.ok) throw new CatalogInputError(parsed.error)
+  const { id } = await findOrCreateCertification(parsed.data, userId)
   return { id }
 }
