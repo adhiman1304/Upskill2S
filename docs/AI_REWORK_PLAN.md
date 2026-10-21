@@ -307,6 +307,21 @@ Rule: an agent edits only the files it owns. Anything else goes into `docs/hando
 
 **I: Integration and verification.** Owns everything. Reads every `docs/handoff/*.md`, reconciles contracts, runs `npm run lint` and `npm run build`, runs the dev servers, smoke-tests each route in a browser (local auth bypass), fixes cross-workstream mismatches, updates `README.md`, `AGENTS.md`, `.env.example` files, and writes `docs/handoff/INTEGRATION.md` listing what was verified and what was not. Does not add features.
 
+### Wave 3 (one agent, after integration)
+
+**G: Design pass.** Owns every file under `client/src/` (no server changes, no behavior changes, no new features). Goal: the product should feel simple, familiar and to the point. Principles:
+
+- One type family for everything (keep DM Sans for body and UI; drop Space Grotesk unless it is used only for the brand mark). One scale of sizes (base 15 or 16 px, four steps), one weight for headings and one for body.
+- Density: nothing takes more space than it needs. Tighter paddings, fewer cards inside cards, fewer boxes with borders; use whitespace and alignment instead of chrome. Remove decorative gradients, badges and icons that carry no information.
+- One consistent layout grammar: a page has a title row, an optional one-line description, then content in a single column (max width about 960 px) except where a side panel earns its place (brief sources). Same header pattern on every page.
+- Primary action is obvious on every page and there is at most one primary button per view. Secondary actions are quiet text buttons.
+- Familiar components: plain inputs, standard checkboxes, native-feeling selects, simple tables, standard link styling. No novel interaction patterns.
+- Color: a neutral palette, one accent, semantic colors for fresh / stale / error only. Dark mode is not required.
+- Mobile transfers for free when the above is followed: single column, sidebar collapses to a top bar with a menu, tap targets at least 40 px, no horizontal scroll. Verify at 390 px and 1280 px widths.
+- Clean up: consolidate the scattered CSS files (`Portal.css`, `Features.css`, `Community.css`, `ProviderDirectory.css`, `layout.css`, per-page css) into `client/src/styles/` with tokens in one place; delete dead classes; legacy pages get the same treatment but not a redesign.
+
+Done when: every route renders with the new system at both widths, lint and build pass, and `docs/handoff/G.md` lists the token set and the before/after decisions.
+
 Orchestrator (Claude in this session): commits after each wave, writes `docs/STANDUP_NOTES.md`.
 
 ## 8. Agent working rules
