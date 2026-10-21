@@ -25,14 +25,14 @@ export const MARK_GLYPH_PATHS = ['M6 9H9V15H15V6H18V18H6Z'] as const
  * - Advance 604 (the font's u), ink x 60 to 538 (its side bearings).
  * - Stems 120 wide (the font's stem), bowl 100 thick (the font's thinner
  *   bottom stroke, so the stroke contrast matches).
- * - Left stem from the x-height (505) to the baseline. Right stem rises one
- *   third of the x-height above it, to 673: the same 3 : 4 ratio as the tiled
- *   mark, and below the ascender (720) so it reads as u, not d.
- * The viewBox runs from the top of the rising stem (y 0) to the baseline
- * (y 673), so the SVG sits on the text baseline with vertical-align: baseline.
+ * - Both stems run from the x-height (505) to the baseline, so the top of the
+ *   u lines up with the top of the p that follows. The rising stem is kept
+ *   for the tiled mark only; in running text it would read as a d.
+ * The viewBox runs from the x-height (y 0) to the baseline (y 505), so the
+ * SVG sits on the text baseline with vertical-align: baseline.
  */
 export const WORDMARK_U = {
   width: 604,
-  height: 673,
-  path: 'M60 168H180V573H418V0H538V673H60Z',
+  height: 505,
+  path: 'M60 0H180V405H418V0H538V505H60Z',
 } as const

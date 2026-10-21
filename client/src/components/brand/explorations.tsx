@@ -101,7 +101,7 @@ export function BrandExplorations() {
           <Wordmark /><Wordmark text className="brand-exploration-plain" /><small>{px}</small>
         </div>)}
       </div>
-      <div><strong>Logotype: the mark is the u</strong><p>At 16, 28 and 40 px, the bracket u in the text colour followed by "pskill" in DM Sans 600, -0.02 em; plain-text "upskill" beside it for comparison.</p><p className="muted">The glyph uses DM Sans 600's own u metrics: 0.604 em advance, 0.06 em left bearing, 0.12 em stems, 0.10 em bowl, x-height 0.505 em. The right stem rises to 0.673 em, a third of the x-height, below the 0.72 em ascender of k and l, so it reads as u and not d. No accent dot on the i: the mark carries the idea alone.</p></div>
+      <div><strong>Logotype: the mark is the u</strong><p>At 16, 28 and 40 px, the bracket u in the text colour followed by "pskill" in DM Sans 600, -0.02 em; plain-text "upskill" beside it for comparison.</p><p className="muted">The glyph uses DM Sans 600's own u metrics: 0.604 em advance, 0.06 em left bearing, 0.12 em stems, 0.10 em bowl, x-height 0.505 em. Both stems stop at the x-height so the top of the u lines up with the p; the rising stem lives in the tiled mark only. No accent dot on the i.</p></div>
     </section>
     <Row d={roundOne} />
   </div>

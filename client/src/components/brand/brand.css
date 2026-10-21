@@ -3,7 +3,7 @@
 .brand.brand-lockup {
   --brand-mark: 28px;
   --brand-text: 24px;
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; gap: calc(var(--brand-text) * 0.4);
   color: var(--color-text); font-size: var(--brand-text); line-height: 1; text-decoration: none;
 }
 .brand.brand-sm { --brand-mark: 22px; --brand-text: 18px; }
@@ -20,11 +20,11 @@
   display: inline-block; font-family: var(--font); font-weight: var(--weight-heading);
   letter-spacing: -0.02em; line-height: 1; white-space: nowrap; color: inherit;
 }
-/* The bracket u: DM Sans 600 u advance (0.604 em) and the rising stem's height
-   (0.673 em), bottom on the baseline. The margin applies the -0.02 em tracking
+/* The bracket u: DM Sans 600 u advance (0.604 em) and x-height (0.505 em),
+   bottom on the baseline. The margin applies the -0.02 em tracking
    the letter it replaces would have had. */
 .wordmark-u {
-  display: inline-block; width: 0.604em; height: 0.673em; vertical-align: baseline;
+  display: inline-block; width: 0.604em; height: 0.505em; vertical-align: baseline;
   margin-right: -0.02em; overflow: visible;
 }
 

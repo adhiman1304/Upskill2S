@@ -18,13 +18,13 @@ type BrandProps = {
 }
 
 /**
- * Full brand: the logotype, where the bracket-u mark is the "u" of "upskill".
- * Compact: the green tiled mark (favicon style).
+ * Full brand: the green tiled mark next to the logotype, where the same
+ * bracket-u glyph is the "u" of "upskill". Compact: the tiled mark alone.
  */
 export function Brand({ size = 'md', compact = false, className }: BrandProps) {
   const classes = ['brand', 'brand-lockup', `brand-${size}`, compact ? 'brand-compact' : '', className ?? ''].filter(Boolean).join(' ')
   return <div className={classes}>
-    {compact ? <LogoMark title="Upskill" /> : <Wordmark />}
+    {compact ? <LogoMark title="Upskill" /> : <><LogoMark /><Wordmark /></>}
     {showExplorations && BrandExplorations && createPortal(<div className="brand-explorations-overlay"><Suspense fallback={null}><BrandExplorations /></Suspense></div>, document.body)}
   </div>
 }
