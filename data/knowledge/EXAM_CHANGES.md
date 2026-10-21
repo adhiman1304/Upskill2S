@@ -53,3 +53,28 @@ Google Cloud, ISC2, ISACA, PMI, PeopleCert, Databricks and Linux Foundation use 
 - `gpt-5` and `gpt-5-mini` snapshots are scheduled for shutdown on 2026-12-11. Current defaults are `gpt-6-astra` (research) and `gpt-6-luna` (fast).
 - The Responses API web search tool type is `web_search`; `web_search_preview` is legacy. Citations arrive as `url_citation` annotations and links carry `utm_source=openai`, which the pipeline strips.
 - `max_tool_calls` is accepted by the API but missing from SDK 6.49.0 types; `filters.blocked_domains` is documented in the guide but not in the API reference, so the pipeline retries without it if rejected.
+
+## Anthropic (workstream F, checked 2026-10-22)
+
+Anthropic runs the **Claude Certification Program** through the Claude Partner Network. Four exams are currently offered, all delivered by Pearson VUE (OnVUE online or test centre), with Credly badges, valid 12 months:
+
+| Code (Pearson) | Title | Price (USD, before partner discount) |
+|---|---|---|
+| CCAO-F | Claude Certified Associate – Foundations | $99 |
+| CCDV-F | Claude Certified Developer – Foundations | $125 |
+| CCAR-F | Claude Certified Architect – Foundations | $125 (was $99 before 2026-06-30) |
+| CCAR-P | Claude Certified Architect – Professional | $175 (no Foundations prerequisite) |
+
+- Eligibility: employees of Claude Partner Network organisations only; customers and non-partners cannot certify. Partner Network membership is free.
+- History: Architect – Foundations launched in March 2026; Associate, Developer and Architect – Professional were announced on 2026-07-23. Exam delivery moved to Pearson and badging to Credly on 2026-06-30; the old practice exam was retired in that move (the exam guides include sample questions).
+- Format (Pearson page): multiple choice and scenario-based multiple response, 120 minutes.
+- **Upcoming:** Pearson says the Associate, Developer and Architect – Professional exams get updated content on **2026-12-07**; updated exam guides are published 2026-11-17. Candidates testing on or after 2026-12-07 should use the new guide.
+- Naming: community posts often write "CCA-F" / "CCA-P" for the architect exams; Pearson's codes are CCAR-F / CCAR-P. Both forms are catalog aliases.
+- The catalog's `officialUrl` for each exam is its Anthropic Partner Academy page (`anthropic-partners.skilljar.com/claude-certified-<role>-<level>-certification`); each returned HTTP 200 on 2026-10-22.
+
+Sources:
+- https://claude.com/resources/articles/four-role-based-claude-certifications (2026-07-23 announcement)
+- https://www.pearsonvue.com/us/en/anthropic.html (exam codes, 2026-12-07 update)
+- https://anthropic-partners.skilljar.com/page/faq-certifications (eligibility, prices, validity, Pearson/Credly move)
+- https://anthropic-partners.skilljar.com/claude-certified-architect-foundations-certification (and the associate, developer and architect-professional pages linked from it)
+- https://www.anthropic.com/news/claude-partner-network (Partner Network and first certification)

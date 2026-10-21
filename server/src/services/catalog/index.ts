@@ -5,8 +5,11 @@ import { config } from '../../config.js'
 import { prisma } from '../../database.js'
 import { catalogSeedEntrySchema, followStatusSchema, resolveCertificationInputSchema, type CatalogHitDto, type CatalogSeedEntry, type FollowStatus, type FreshnessStatus, type ResolveCertificationInput } from '../../lib/contracts/index.js'
 import { certificationSchema, normalizeKey } from '../../lib/validation.js'
+import { buildVocabulary, fuzzyScore, queryTokens } from './fuzzy.js'
 
 const SEARCH_LIMIT = 15
+/** Fuzzy (typo-tolerant) matches rank below every exact, prefix and substring match. */
+const FUZZY_RANK = 5
 const MINE_LIMIT = 12
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -28,6 +31,8 @@ const providerAliases: Record<string, string> = {
   'red hat': 'red hat',
   redhat: 'red hat',
   'project management institute': 'pmi',
+  claude: 'anthropic',
+  'anthropic pbc': 'anthropic',
 }
 
 // --- seed catalog -------------------------------------------------------------------------------
@@ -51,7 +56,7 @@ export function listCatalogEntries(): CatalogSeedEntry[] {
 
 // --- helpers ------------------------------------------------------------------------------------
 
-function httpsOrNull(value: string | null | undefined) {
+export function httpsOrNull(value: string | null | undefined) {
   if (!value) return null
   try {
     const url = new URL(value)
@@ -62,11 +67,11 @@ function httpsOrNull(value: string | null | undefined) {
 }
 
 /** Lower-case, alphanumerics (and '+') only: "DP-700" and "dp700" compare equal. */
-function compact(value: string) {
+export function compact(value: string) {
   return normalizeKey(value).replace(/[^\p{L}\p{N}+]/gu, '')
 }
 
-function canonicalProviderKey(provider: string) {
+export function canonicalProviderKey(provider: string) {
   const key = normalizeKey(provider)
   return providerAliases[key] ?? key
 }
@@ -185,19 +190,27 @@ export async function searchCatalog(query: string, userId: string): Promise<Cata
   })
   const dbKeys = new Set(rows.map((row) => entryKey(canonicalProviderKey(row.providerKey), row.codeKey)))
 
-  type Ranked = { rank: number; source: 'db' | 'catalog'; researched: number; code: string; row?: (typeof rows)[number]; entry?: CatalogSeedEntry }
+  // Rank 5 is the fuzzy tier (typo tolerant, see fuzzy.ts); `score` orders hits within it (higher is better).
+  type Ranked = { rank: number; score: number; source: 'db' | 'catalog'; researched: number; code: string; row?: (typeof rows)[number]; entry?: CatalogSeedEntry }
   const ranked: Ranked[] = []
+  const tokens = queryTokens(trimmed)
+  const rankOf = (candidate: { provider: string; code: string; title: string; aliases: string[] }) => {
+    const rank = matchRank(trimmed, candidate)
+    if (rank !== null) return { rank, score: 1 }
+    const score = fuzzyScore(tokens, buildVocabulary(candidate))
+    return score === null ? null : { rank: FUZZY_RANK, score }
+  }
   for (const row of rows) {
-    const rank = matchRank(trimmed, { provider: row.provider, code: row.code, title: row.title, aliases: parseAliases(row.aliases) })
-    if (rank !== null) ranked.push({ rank, source: 'db', researched: row.lastResearchedAt?.getTime() ?? 0, code: row.code, row })
+    const match = rankOf({ provider: row.provider, code: row.code, title: row.title, aliases: parseAliases(row.aliases) })
+    if (match) ranked.push({ ...match, source: 'db', researched: row.lastResearchedAt?.getTime() ?? 0, code: row.code, row })
   }
   for (const entry of listCatalogEntries()) {
     if (dbKeys.has(entryKey(canonicalProviderKey(entry.provider), normalizeKey(entry.code)))) continue
-    const rank = matchRank(trimmed, entry)
-    if (rank !== null) ranked.push({ rank, source: 'catalog', researched: 0, code: entry.code, entry })
+    const match = rankOf(entry)
+    if (match) ranked.push({ ...match, source: 'catalog', researched: 0, code: entry.code, entry })
   }
 
-  ranked.sort((a, b) => a.rank - b.rank || b.researched - a.researched || (a.source === b.source ? 0 : a.source === 'db' ? -1 : 1) || a.code.localeCompare(b.code))
+  ranked.sort((a, b) => a.rank - b.rank || b.score - a.score || b.researched - a.researched || (a.source === b.source ? 0 : a.source === 'db' ? -1 : 1) || a.code.localeCompare(b.code))
   const top = ranked.slice(0, SEARCH_LIMIT)
   const ids = top.flatMap((item) => (item.row ? [item.row.id] : []))
   const [briefDates, follows] = await Promise.all([currentBriefDates(ids), followStatuses(userId, ids)])
@@ -230,7 +243,7 @@ async function myCertifications(userId: string): Promise<CatalogHitDto[]> {
 // --- resolve ------------------------------------------------------------------------------------
 
 /** Seed catalog entry for a provider + code (exact code first, then a code-like alias such as "AZ900"). */
-function findCatalogEntry(provider: string, code: string): CatalogSeedEntry | null {
+export function findCatalogEntry(provider: string, code: string): CatalogSeedEntry | null {
   const providerKey = canonicalProviderKey(provider)
   const codeKey = normalizeKey(code)
   const codeCompact = compact(code)
