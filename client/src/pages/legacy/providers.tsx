@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 export const featuredProviders = [
   { name: 'Microsoft', domain: 'microsoft.com' },
-  { name: 'Anthropic', domain: 'anthropic.com' },
   { name: 'AWS', domain: 'aws.amazon.com', detail: 'Amazon Web Services' },
   { name: 'Google Cloud', domain: 'cloud.google.com' },
   { name: 'Cisco', domain: 'cisco.com' },

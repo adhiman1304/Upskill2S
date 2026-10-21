@@ -8,5 +8,5 @@ const titles: Record<FreshnessStatus, string> = {
 }
 
 export function FreshnessChip({ status }: { status: FreshnessStatus }) {
-  return <span className={`freshness-chip is-${status}`} title={titles[status]}><span className="freshness-dot" aria-hidden="true" />{labels[status]}</span>
+  return <span className={`chip is-${status}`} title={titles[status]}><span className="chip-dot" aria-hidden="true" />{labels[status]}</span>
 }

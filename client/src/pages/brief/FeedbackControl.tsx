@@ -1,25 +1,24 @@
-import { Check, Clock, X } from 'lucide-react'
 import type { FeedbackItemType, FeedbackVerdict } from '../../lib/contracts'
 import { useBriefView } from './brief-context'
 import { emptyFeedback, safeUrl } from './brief-utils'
 
-const verdicts: { verdict: FeedbackVerdict; label: string; Icon: typeof Check }[] = [
-  { verdict: 'accurate', label: 'Accurate', Icon: Check },
-  { verdict: 'inaccurate', label: 'Inaccurate', Icon: X },
-  { verdict: 'outdated', label: 'Outdated', Icon: Clock },
+const verdicts: { verdict: FeedbackVerdict; label: string }[] = [
+  { verdict: 'accurate', label: 'Accurate' },
+  { verdict: 'inaccurate', label: 'Inaccurate' },
+  { verdict: 'outdated', label: 'Outdated' },
 ]
 
-/** Compact accurate / inaccurate / outdated vote with counts; highlights the user's own verdict. */
+/** Small text buttons with counts ("Accurate 3"); highlights the user's own verdict. */
 export function FeedbackControl({ itemType, itemId }: { itemType: FeedbackItemType; itemId: string }) {
   const { feedback, readOnly, pendingVotes, onVote } = useBriefView()
   const key = `${itemType}:${itemId}`
   const summary = feedback[key] ?? emptyFeedback()
   const pending = pendingVotes.has(key)
   return <div className="brief-feedback" role="group" aria-label="Is this accurate?">
-    {verdicts.map(({ verdict, label, Icon }) => {
+    {verdicts.map(({ verdict, label }) => {
       const mine = summary.mine === verdict
       return <button key={verdict} type="button" className={`brief-vote vote-${verdict}${mine ? ' is-mine' : ''}`} aria-pressed={mine} title={mine ? `You marked this ${label.toLowerCase()}` : `Mark as ${label.toLowerCase()}`} disabled={readOnly || pending} onClick={() => onVote(itemType, itemId, verdict)}>
-        <Icon size={11} aria-hidden="true" /><span className="sr-only">{label}</span>{summary[verdict] > 0 && <span className="brief-vote-count">{summary[verdict]}</span>}
+        {label}{summary[verdict] > 0 && <span className="brief-vote-count">{summary[verdict]}</span>}
       </button>
     })}
   </div>

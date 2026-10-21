@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, CircleAlert, Clock, FileText, KeyRound, LoaderCircle, Mic, MicOff, Paperclip, Sparkles, X } from 'lucide-react'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useSpeechDictation } from '../../hooks/useSpeechDictation'
 import { ApiError } from '../../lib/api/client'
 import { createIntake, listMyIntakes } from '../../lib/api/intake'
@@ -37,6 +38,7 @@ function extensionOf(name: string) {
 const statusLabels: Record<IntakeSessionDto['status'], string> = { QUEUED: 'Queued', RUNNING: 'Running', SUCCEEDED: 'Ready', FAILED: 'Failed' }
 
 export function IntakePage() {
+  useDocumentTitle('Help me choose')
   const request = useApi()
   const navigate = useNavigate()
   const location = useLocation()
@@ -111,17 +113,16 @@ export function IntakePage() {
   const canSubmit = (text.trim().length > 0 || files.length > 0) && !submitting
 
   return <div className="page-content intake-page">
-    <header className="topbar"><div><p className="breadcrumb">STUDY <span>/</span> HELP ME CHOOSE</p><h1>Help me choose a certification</h1></div></header>
-    <p className="intake-lede">Tell us where you are and where you want to go. Type, dictate, or attach a resume, project description or job offer, and we will suggest certifications that fit.</p>
+    <header className="page-header"><div><h1>Help me choose a certification</h1><p className="page-desc">Tell us where you are and where you want to go. Type, dictate, or attach a resume, project description or job offer, and we will suggest certifications that fit.</p></div></header>
 
-    {keyMissing && <div className="intake-callout" role="alert">
+    {keyMissing && <div className="alert warning intake-callout" role="alert">
       <KeyRound size={16} aria-hidden="true" />
       <div><strong>Add your OpenAI API key first.</strong><p>Recommendations run with your own OpenAI key. Add it in Settings, then submit again. Your text and files are still here.</p></div>
-      <Link className="button button-primary" to="/settings">Open settings</Link>
+      <Link className="button button-secondary button-small" to="/settings">Open settings</Link>
     </div>}
 
-    {followUps.length > 0 && <div className="intake-followups-hint">
-      <p className="eyebrow">ANSWER THESE TO REFINE YOUR RESULTS</p>
+    {followUps.length > 0 && <div className="alert intake-followups-hint">
+      <strong>Answer these to refine your results</strong>
       <ul>{followUps.map((question) => <li key={question}>{question}</li>)}</ul>
     </div>}
 
@@ -151,7 +152,7 @@ export function IntakePage() {
       {dictation.error && <p className="intake-inline-error" role="alert">{dictation.error}</p>}
 
       <div className="intake-examples" aria-label="Example prompts">
-        <span className="eyebrow">TRY AN EXAMPLE</span>
+        <span className="eyebrow">Try an example</span>
         <div>{examples.map((example) => <button type="button" key={example} className="intake-chip" onClick={() => setText(example)} title={example}>{example.length > 64 ? `${example.slice(0, 62)}...` : example}</button>)}</div>
       </div>
 
@@ -181,7 +182,7 @@ export function IntakePage() {
       {error && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</div>}
 
       <div className="intake-submit">
-        <p className="muted">Your input is sent to OpenAI with your key. Avoid personal details you would not put on a resume.</p>
+        <p className="intake-privacy">Your input is sent to OpenAI with your key. Avoid personal details you would not put on a resume.</p>
         <button type="submit" className="button button-primary" disabled={!canSubmit}>
           {submitting ? <LoaderCircle size={15} className="spin" aria-hidden="true" /> : <Sparkles size={15} aria-hidden="true" />}
           {submitting ? 'Starting...' : 'Recommend certifications'}
@@ -189,17 +190,17 @@ export function IntakePage() {
       </div>
     </form>
 
-    <section className="intake-history" aria-labelledby="intake-history-heading">
+    <section className="section intake-history" aria-labelledby="intake-history-heading">
       <div className="section-heading"><div><h2 id="intake-history-heading">Previous intakes</h2><p>Your last 10 recommendation requests.</p></div></div>
       {historyError && <div className="alert error"><CircleAlert size={15} aria-hidden="true" />{historyError}</div>}
       {!history && !historyError && <p className="muted">Loading...</p>}
       {history?.length === 0 && <p className="muted">No previous intakes yet.</p>}
-      {history && history.length > 0 && <ul className="intake-history-list">
+      {history && history.length > 0 && <ul className="list intake-history-list">
         {history.map((item) => <li key={item.id}>
           <Link to={`/intake/${item.id}`}>
             <span className="intake-history-text">{item.inputText || item.attachments.map((file) => file.name).join(', ') || 'Untitled intake'}</span>
             <span className="intake-history-meta">
-              <span className={`intake-status intake-status-${item.status.toLowerCase()}`}>{statusLabels[item.status]}</span>
+              <span className={`chip intake-status-${item.status.toLowerCase()}`}>{statusLabels[item.status]}</span>
               {item.result && <small>{item.result.recommendations.length} recommendations</small>}
               <small><Clock size={11} aria-hidden="true" /> {formatDate(item.createdAt)}</small>
               <ArrowRight size={14} aria-hidden="true" />

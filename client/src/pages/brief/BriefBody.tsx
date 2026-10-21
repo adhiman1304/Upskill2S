@@ -27,9 +27,9 @@ export function BriefBody({ brief, completedItemIds, onToggle }: BriefBodyProps)
         {content.skillsMeasured.length > 0 && <SkillsSection brief={brief} />}
         {content.officialLearningPath.length > 0 && <LinkListSection title="Official learning path" description="From the exam provider." items={content.officialLearningPath.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: pathIcons[item.type], kindLabel: pathLabels[item.type], detail: item.notes, meta: formatMinutes(item.estimatedMinutes), sourceIds: item.sourceIds }))} itemType="learning_path" />}
         {content.communityResources.length > 0 && <LinkListSection title="Community resources" description="Recommended by the community; not official." items={content.communityResources.map((item) => ({ id: item.id, title: item.title, url: item.url, Icon: resourceIcons[item.kind], kindLabel: resourceLabels[item.kind], detail: item.whyRecommended, meta: [item.author, item.publishedAt ? formatDate(item.publishedAt) : null].filter(Boolean).join(' · '), sourceIds: item.sourceIds }))} itemType="resource" />}
+        <SourcesPanel brief={brief} />
       </aside>
     </div>
-    <SourcesPanel brief={brief} />
   </div>
 }
 
@@ -37,9 +37,9 @@ function SummarySection({ brief }: { brief: StudyBriefDto }) {
   const { content } = brief
   const notices = [content.certification.retirementNotice, ...content.warnings].filter((value): value is string => Boolean(value))
   return <section className="brief-section brief-summary">
-    <div className="brief-summary-head"><p className="eyebrow">SUMMARY</p><FeedbackControl itemType="brief" itemId="brief" /></div>
+    <div className="brief-summary-head"><h2>Summary</h2><FeedbackControl itemType="brief" itemId="brief" /></div>
     <p className="brief-summary-text">{content.summary}</p>
-    {notices.length > 0 && <ul className="brief-warnings">{notices.map((warning, index) => <li key={index}><AlertTriangle size={14} /> {warning}</li>)}</ul>}
+    {notices.length > 0 && <ul className="brief-warnings">{notices.map((warning, index) => <li key={index} className="alert warning"><AlertTriangle size={14} aria-hidden="true" /> {warning}</li>)}</ul>}
   </section>
 }
 
@@ -81,7 +81,7 @@ function GapsSection({ gaps }: { gaps: KnownGap[] }) {
     <div className="section-heading"><div><h2>Known gaps</h2><p>Where candidates say the official material falls short.</p></div></div>
     <div className="brief-gaps">
       {gaps.map((gap) => <article key={gap.id} className="brief-gap">
-        <div className="brief-gap-top"><span className={`brief-confidence is-${gap.confidence}`}>{confidenceLabels[gap.confidence]}</span><SourceChips ids={gap.sourceIds} /></div>
+        <div className="brief-gap-top"><span className={`chip brief-confidence-${gap.confidence}`}>{confidenceLabels[gap.confidence]}</span><SourceChips ids={gap.sourceIds} /></div>
         <h3>{gap.title}</h3>
         <p>{gap.detail}</p>
         <p className="brief-gap-recommendation"><strong>Do this:</strong> {gap.recommendation}</p>
@@ -116,7 +116,7 @@ function LinkListSection({ title, description, items, itemType }: { title: strin
 function SourcesPanel({ brief }: { brief: StudyBriefDto }) {
   const { sources } = brief.content
   return <details className="brief-section brief-sources">
-    <summary><span><strong>Sources</strong> <span className="muted-inline">{sources.length} cited · generated {formatDate(brief.generatedAt)} with {brief.model}</span></span></summary>
+    <summary><h2>Sources</h2> <span className="muted-inline">{sources.length} cited · generated {formatDate(brief.generatedAt)} with {brief.model}</span></summary>
     <ol>
       {sources.map((source) => {
         const href = safeUrl(source.url)

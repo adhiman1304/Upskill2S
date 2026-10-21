@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CircleAlert, Clock, ExternalLink, FileText, LoaderCircle, RotateCcw } from 'lucide-react'
 import { usePolling } from '../../hooks/usePolling'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { ApiError } from '../../lib/api/client'
 import { getIntake, selectRecommendation } from '../../lib/api/intake'
 import { getJob } from '../../lib/api/jobs'
@@ -25,6 +26,7 @@ function safeHttpsUrl(value: string | null) {
 }
 
 export function IntakeResultPage() {
+  useDocumentTitle('Recommendations')
   const { id = '' } = useParams()
   const request = useApi()
   const navigate = useNavigate()
@@ -68,8 +70,8 @@ export function IntakeResultPage() {
     navigate('/intake', { state })
   }
 
-  const header = <header className="topbar">
-    <div><p className="breadcrumb">STUDY <span>/</span> <Link to="/intake">HELP ME CHOOSE</Link> <span>/</span> RECOMMENDATIONS</p><h1>Your recommendations</h1></div>
+  const header = <header className="page-header">
+    <div><p className="breadcrumb"><Link to="/intake">Help me choose</Link> <span>/</span> Recommendations</p><h1>Your recommendations</h1></div>
     <Link className="button button-secondary" to="/intake"><ArrowLeft size={14} aria-hidden="true" />New intake</Link>
   </header>
 
@@ -108,8 +110,8 @@ export function IntakeResultPage() {
 
   const result = current.result
   return <div className="page-content intake-page">{header}
-    <section className="intake-profile">
-      <p className="eyebrow">YOUR PROFILE</p>
+    <section className="intake-profile" aria-labelledby="intake-profile-heading">
+      <h2 id="intake-profile-heading">Your profile</h2>
       <p className="intake-profile-summary">{result.profileSummary}</p>
       {result.detectedSkills.length > 0 && <div className="intake-chips" aria-label="Detected skills">{result.detectedSkills.map((skill) => <span key={skill} className="intake-skill">{skill}</span>)}</div>}
       {result.goals.length > 0 && <div className="intake-goals"><strong>Goals</strong><ul>{result.goals.map((goal) => <li key={goal}>{goal}</li>)}</ul></div>}
@@ -117,7 +119,7 @@ export function IntakeResultPage() {
 
     {selectError && <div className="alert error" role="alert"><CircleAlert size={15} aria-hidden="true" />{selectError}</div>}
 
-    <section aria-labelledby="intake-recs-heading">
+    <section className="section" aria-labelledby="intake-recs-heading">
       <div className="section-heading"><div><h2 id="intake-recs-heading">Recommended certifications</h2><p>Ranked by fit. Start studying to generate a cited study brief.</p></div></div>
       <ol className="intake-recs">
         {result.recommendations.map((recommendation, index) => {
@@ -126,7 +128,7 @@ export function IntakeResultPage() {
             <div className="intake-rec-head">
               <span className="intake-rank" aria-label={`Rank ${recommendation.rank}`}>{recommendation.rank}</span>
               <div className="intake-rec-title">
-                <span className="intake-rec-meta"><span>{recommendation.provider}</span><span className="intake-code">{recommendation.code}</span><span className={`intake-level intake-level-${recommendation.level}`}>{levelLabels[recommendation.level]}</span></span>
+                <span className="intake-rec-meta"><span>{recommendation.provider}</span><strong>{recommendation.code}</strong><span className="chip">{levelLabels[recommendation.level]}</span></span>
                 <h3>{recommendation.title}</h3>
               </div>
             </div>
@@ -135,7 +137,7 @@ export function IntakeResultPage() {
               <div><dt>Estimated prep</dt><dd>{recommendation.estimatedPrepWeeks === null ? 'Not estimated' : `${recommendation.estimatedPrepWeeks} week${recommendation.estimatedPrepWeeks === 1 ? '' : 's'}`}</dd></div>
               <div><dt>Prerequisites</dt><dd>{recommendation.prerequisites.length ? <ul>{recommendation.prerequisites.map((item) => <li key={item}>{item}</li>)}</ul> : 'None listed'}</dd></div>
             </dl>
-            {recommendation.matchedSignals.length > 0 && <div className="intake-signals"><span className="eyebrow">MATCHED FROM YOUR INPUT</span><div className="intake-chips">{recommendation.matchedSignals.map((signal) => <span key={signal} className="intake-signal">{signal}</span>)}</div></div>}
+            {recommendation.matchedSignals.length > 0 && <div className="intake-signals"><span className="eyebrow">Matched from your input</span><div className="intake-chips">{recommendation.matchedSignals.map((signal) => <span key={signal} className="intake-signal">{signal}</span>)}</div></div>}
             <div className="intake-rec-actions">
               {url && <a className="button button-quiet" href={url} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} aria-hidden="true" />Official page</a>}
               <button type="button" className="button button-primary" disabled={selecting !== null} onClick={() => void startStudying(index)}>
@@ -148,8 +150,8 @@ export function IntakeResultPage() {
       </ol>
     </section>
 
-    {result.followUpQuestions.length > 0 && <section className="intake-followups">
-      <div><Sparkles size={16} aria-hidden="true" /><div><strong>Sharpen these recommendations</strong><p>Answering these would help us suggest a better fit.</p></div></div>
+    {result.followUpQuestions.length > 0 && <section className="section intake-followups" aria-labelledby="intake-followups-heading">
+      <div className="section-heading"><div><h2 id="intake-followups-heading">Sharpen these recommendations</h2><p>Answering these would help us suggest a better fit.</p></div></div>
       <ul>{result.followUpQuestions.map((question) => <li key={question}>{question}</li>)}</ul>
       <button type="button" className="button button-secondary" onClick={refine}><RotateCcw size={14} aria-hidden="true" />Refine</button>
     </section>}

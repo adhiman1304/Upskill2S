@@ -1,11 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ShieldCheck } from 'lucide-react'
-import './Portal.css'
-import './ProviderDirectory.css'
-import './Features.css'
-import './Community.css'
 import { SessionProvider, useSession } from './session'
+import { useDocumentTitle } from './hooks/useDocumentTitle'
 import { AppShell } from './components/layout/AppShell'
 import { LoginScreen } from './components/layout/LoginScreen'
 import { HomePage } from './pages/home/HomePage'
@@ -58,6 +55,11 @@ function RequireAuth({ children }: { children: ReactNode }) {
 // UI gate only; the API enforces admin access server-side.
 function RequireAdmin({ children }: { children: ReactNode }) {
   const { isAdmin } = useSession()
-  if (!isAdmin) return <div className="page-content"><div className="empty-state"><div className="empty-icon"><ShieldCheck size={22} /></div><h3>Not authorized</h3><p>This page is available to administrators only.</p></div></div>
+  if (!isAdmin) return <NotAuthorized />
   return children
+}
+
+function NotAuthorized() {
+  useDocumentTitle('Not authorized')
+  return <div className="page-content"><div className="empty-state"><ShieldCheck className="empty-icon" size={20} aria-hidden="true" /><h3>Not authorized</h3><p>This page is available to administrators only.</p></div></div>
 }

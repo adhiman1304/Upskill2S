@@ -69,7 +69,7 @@ export function CertificationSearch({ query, onQueryChange, inputRef }: { query:
 
   return <div className="cert-search" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false) }}>
     <label className="cert-search-field">
-      <Search size={20} aria-hidden="true" />
+      <Search size={18} aria-hidden="true" />
       <span className="visually-hidden">Search certifications by exam code, name or provider</span>
       <input
         ref={inputRef}
@@ -82,14 +82,14 @@ export function CertificationSearch({ query, onQueryChange, inputRef }: { query:
         autoComplete="off"
         spellCheck={false}
         maxLength={100}
-        placeholder="Try AZ-104, SAA-C03, Security+ or CKA"
+        placeholder="Exam code or name, e.g. AZ-104"
         value={query}
         onChange={(event) => { onQueryChange(event.target.value); setOpen(true) }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
       />
       {loading && <LoaderCircle className="spin" size={18} aria-label="Searching" />}
-      {query && !loading && <button type="button" className="cert-search-clear" aria-label="Clear search" onClick={() => { onQueryChange(''); inputRef.current?.focus() }}><X size={16} /></button>}
+      {query && !loading && <button type="button" className="icon-button cert-search-clear" aria-label="Clear search" onClick={() => { onQueryChange(''); inputRef.current?.focus() }}><X size={16} /></button>}
     </label>
     {showPanel && <div className="cert-search-panel">
       {result.error && result.key === trimmed && <div className="alert error" role="alert">{result.error}</div>}
@@ -107,7 +107,7 @@ export function CertificationSearch({ query, onQueryChange, inputRef }: { query:
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => void select(hit)}
           >
-            <span className="provider-logo home-logo"><ProviderLogo name={hit.provider} /></span>
+            <span className="provider-logo"><ProviderLogo name={hit.provider} /></span>
             <span className="cert-search-text">
               <strong>{hit.code}</strong>
               <span>{hit.title}</span>

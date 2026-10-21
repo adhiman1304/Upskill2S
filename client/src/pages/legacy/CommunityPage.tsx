@@ -3,9 +3,12 @@ import { CircleHelp, Clock3, Lightbulb, LoaderCircle, MessageCircle, MessagesSqu
 import { createCommunityComment, createCommunityPost, getCommunityPosts } from '../../lib/api'
 import type { CommunityPost, CommunityPostKind } from '../../lib/api'
 import { useApi } from '../../session'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
+import './legacy.css'
 import { formatDate, message } from './utils'
 
 export function CommunityPage() {
+  useDocumentTitle('Ideas & questions')
   const request = useApi()
   const [posts, setPosts] = useState<CommunityPost[]>([])
   const [filter, setFilter] = useState<'ALL' | CommunityPostKind>('ALL')
@@ -64,13 +67,12 @@ export function CommunityPage() {
   ]
 
   return <div className="page-content community-page">
-    <header className="topbar"><div><p className="breadcrumb">COMMUNITY <span>/</span> IDEAS &amp; QUESTIONS</p><h1>Ideas &amp; questions</h1></div></header>
-    <p className="muted community-intro">Suggest an improvement or ask the community for help. Anyone signed in can reply.</p>
+    <header className="page-header"><div><h1>Ideas &amp; questions</h1><p className="page-desc">Suggest an improvement or ask the community for help. Anyone signed in can reply.</p></div></header>
     {error && <div className="alert error" role="alert">{error}</div>}
-    <form className="community-composer" onSubmit={(event) => void submitPost(event)}>
+    <form className="community-composer card" onSubmit={(event) => void submitPost(event)}>
       <div className="segmented" role="group" aria-label="Post type">
-        <button type="button" className={kind === 'IDEA' ? 'active' : ''} onClick={() => setKind('IDEA')}><Lightbulb size={15} /> Idea</button>
-        <button type="button" className={kind === 'QUESTION' ? 'active' : ''} onClick={() => setKind('QUESTION')}><CircleHelp size={15} /> Question</button>
+        <button type="button" aria-pressed={kind === 'IDEA'} className={kind === 'IDEA' ? 'active' : ''} onClick={() => setKind('IDEA')}><Lightbulb size={15} /> Idea</button>
+        <button type="button" aria-pressed={kind === 'QUESTION'} className={kind === 'QUESTION' ? 'active' : ''} onClick={() => setKind('QUESTION')}><CircleHelp size={15} /> Question</button>
       </div>
       <input className="community-input" value={title} maxLength={120} onChange={(event) => setTitle(event.target.value)} placeholder={kind === 'IDEA' ? 'Summarize your idea' : 'What would you like to ask?'} aria-label="Title" />
       <textarea className="community-input" value={body} maxLength={4000} rows={3} onChange={(event) => setBody(event.target.value)} placeholder="Add details" aria-label="Details" />
@@ -79,12 +81,12 @@ export function CommunityPage() {
     <div className="community-filters" role="tablist">
       {filters.map((item) => <button key={item.value} role="tab" aria-selected={filter === item.value} className={filter === item.value ? 'active' : ''} onClick={() => setFilter(item.value)}>{item.label} <span>{item.count}</span></button>)}
     </div>
-    {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading ideas and questions</div> : visible.length ? <div className="post-list">
+    {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading ideas and questions</div> : visible.length ? <div className="list post-list">
       {visible.map((post) => {
         const open = openId === post.id
         const draft = drafts[post.id] ?? ''
         return <article key={post.id} className="post-card">
-          <div className="post-meta"><span className={`post-kind ${post.kind.toLowerCase()}`}>{post.kind === 'IDEA' ? <Lightbulb size={13} /> : <CircleHelp size={13} />} {post.kind === 'IDEA' ? 'Idea' : 'Question'}</span><span><Clock3 size={13} /> {formatDate(post.createdAt)} · {post.authorName}</span></div>
+          <div className="post-meta"><span className={`chip post-kind ${post.kind.toLowerCase()}`}>{post.kind === 'IDEA' ? <Lightbulb size={13} /> : <CircleHelp size={13} />} {post.kind === 'IDEA' ? 'Idea' : 'Question'}</span><span><Clock3 size={13} /> {formatDate(post.createdAt)} · {post.authorName}</span></div>
           <h3>{post.title}</h3>
           <p className="post-body">{post.body}</p>
           <button className="post-comments-toggle" onClick={() => setOpenId(open ? null : post.id)} aria-expanded={open}><MessageCircle size={15} /> {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}</button>
@@ -97,6 +99,6 @@ export function CommunityPage() {
           </div>}
         </article>
       })}
-    </div> : <div className="empty-state"><div className="empty-icon"><MessagesSquare size={21} /></div><h3>No {filter === 'ALL' ? 'ideas or questions' : filter === 'IDEA' ? 'ideas' : 'questions'} yet</h3><p>Start the conversation. Ideas shape the library; questions get answered by the community.</p></div>}
+    </div> : <div className="empty-state"><MessagesSquare className="empty-icon" size={20} aria-hidden="true" /><h3>No {filter === 'ALL' ? 'ideas or questions' : filter === 'IDEA' ? 'ideas' : 'questions'} yet</h3><p>Start the conversation. Ideas shape the library; questions get answered by the community.</p></div>}
   </div>
 }

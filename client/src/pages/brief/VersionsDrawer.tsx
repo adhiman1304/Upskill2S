@@ -35,7 +35,7 @@ export function VersionsDrawer({ load, viewingId, onSelect, onClose }: VersionsD
           return <li key={version.id}>
             <button type="button" className={active ? 'is-active' : ''} onClick={() => onSelect(version)}>
               <strong>Version {version.version}</strong>
-              {version.status === 'CURRENT' && <span className="status-label">Current</span>}
+              {version.status === 'CURRENT' && <span className="chip chip-accent">Current</span>}
               <span>{formatDate(version.generatedAt)} · {version.sourceCount} sources · {version.model}</span>
             </button>
           </li>

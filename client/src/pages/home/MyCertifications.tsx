@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUpRight, BookmarkCheck, LoaderCircle } from 'lucide-react'
+import { BookmarkCheck, LoaderCircle } from 'lucide-react'
 import { searchCatalog } from '../../lib/api/catalog'
 import type { CatalogHitDto } from '../../lib/contracts'
 import { useApi } from '../../session'
@@ -23,18 +23,17 @@ export function MyCertifications() {
     return () => { active = false }
   }, [request])
 
-  return <section id="mine" className="home-section" aria-labelledby="mine-heading">
-    <div className="section-heading"><div><h2 id="mine-heading">My certifications</h2><p>Certifications you follow, then ones recently researched on Upskill.</p></div>{!state.loading && <span className="result-count">{state.items.length} {state.items.length === 1 ? 'certification' : 'certifications'}</span>}</div>
+  return <section id="mine" className="section home-anchor" aria-labelledby="mine-heading">
+    <div className="section-heading"><div><h2 id="mine-heading">My certifications</h2><p>Followed first, then recently researched on Upskill.</p></div>{!state.loading && <span className="result-count">{state.items.length} {state.items.length === 1 ? 'certification' : 'certifications'}</span>}</div>
     {state.error && <div className="alert error" role="alert">{state.error}</div>}
     {state.loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading your certifications</div>
-      : state.items.length ? <ul className="mine-list">{state.items.map((item) => <li key={item.certificationId ?? `${item.provider}:${item.code}`}>
+      : state.items.length ? <ul className="list mine-list">{state.items.map((item) => <li key={item.certificationId ?? `${item.provider}:${item.code}`}>
         <Link className="mine-row" to={`/certifications/${encodeURIComponent(item.certificationId ?? '')}`}>
-          <span className="provider-logo home-logo"><ProviderLogo name={item.provider} /></span>
+          <span className="provider-logo"><ProviderLogo name={item.provider} /></span>
           <span className="mine-text"><strong>{item.code} <span className="mine-provider">{item.provider}</span></strong><span>{item.title}</span></span>
-          <span className="mine-meta">{item.following && <small>{followLabels[item.following.status]}</small>}<FreshnessChip status={item.briefStatus} /><small>{item.lastResearchedAt ? `Researched ${formatDate(item.lastResearchedAt)}` : 'Not researched yet'}</small></span>
-          <ArrowUpRight className="row-arrow" size={17} aria-hidden="true" />
+          <span className="mine-meta">{item.following && <span className={`chip chip-${item.following.status.toLowerCase()}`}>{followLabels[item.following.status]}</span>}<FreshnessChip status={item.briefStatus} /><small>{item.lastResearchedAt ? `Researched ${formatDate(item.lastResearchedAt)}` : 'Not researched yet'}</small></span>
         </Link>
       </li>)}</ul>
-      : !state.error && <div className="empty-state home-empty"><div className="empty-icon"><BookmarkCheck size={22} /></div><h3>No certifications yet</h3><p>Search for an exam above, or let us suggest one that fits your goals. Certifications you follow will show up here.</p><Link className="button button-secondary" to="/intake">Help me choose</Link></div>}
+      : !state.error && <div className="empty-state"><BookmarkCheck className="empty-icon" size={20} aria-hidden="true" /><h3>No certifications yet</h3><p>Search for an exam above, or let us suggest one that fits your goals. Certifications you follow will show up here.</p><Link className="button button-secondary" to="/intake">Help me choose</Link></div>}
   </section>
 }

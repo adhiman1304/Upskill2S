@@ -7,6 +7,7 @@ import { followCertification, getBriefPage, getBriefVersion, listBriefVersions, 
 import { getJob } from '../../lib/api/jobs'
 import type { BriefPageDto, BriefVersionSummary, FeedbackItemType, FeedbackVerdict, JobDto, StudyBriefDto } from '../../lib/contracts'
 import { usePolling } from '../../hooks/usePolling'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { formatDate, message } from '../legacy/utils'
 import { BriefViewContext, type BriefViewContextValue } from './brief-context'
 import { advanceFixtureJob, applyVote, createFixtureJob, isTerminal, sourceIndex } from './brief-utils'
@@ -151,6 +152,7 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
   }, [currentBrief, fixture, id, request])
 
   const shownBrief = viewing ?? currentBrief
+  useDocumentTitle(page ? `Study Brief: ${page.certification.code}` : 'Study Brief')
   const contextValue = useMemo<BriefViewContextValue>(() => ({
     sources: sourceIndex(shownBrief?.content.sources ?? []),
     feedback: viewing ? {} : page?.feedback ?? {},
@@ -159,20 +161,20 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
     onVote: (itemType, itemId, verdict) => void vote(itemType, itemId, verdict),
   }), [page?.feedback, pendingVotes, shownBrief, viewing, vote])
 
-  if (!page) return <div className="page-content brief-page">
+  if (!page) return <div className="page-content page-wide brief-page">
     <Link className="back-link" to="/"><ArrowLeft size={16} /> Find a certification</Link>
     {loading ? <div className="loading-state"><LoaderCircle className="spin" size={20} /> Loading study brief</div> : <div className="alert error" role="alert">{loadError || 'Certification not found.'}</div>}
   </div>
 
-  return <div className="page-content brief-page">
+  return <div className="page-content page-wide brief-page">
     <Link className="back-link" to="/"><ArrowLeft size={16} /> Find a certification</Link>
-    {fixture && <div className="brief-sample-banner"><FlaskConical size={15} /> Sample data: a hand-written DP-700 fixture for development. Nothing on this page is saved.</div>}
+    {fixture && <div className="alert warning"><FlaskConical size={15} /> Sample data: a hand-written DP-700 fixture for development. Nothing on this page is saved.</div>}
     <BriefHeader page={page} fixture={fixture} refreshing={starting} jobRunning={jobActive} onRefresh={() => void startRefresh()} onOpenVersions={() => setVersionsOpen(true)} onFollowChange={changeFollow} />
     {refreshIssue && <RefreshIssueCallout issue={refreshIssue} onDismiss={() => setRefreshIssue(null)} />}
     {job && <JobPanel job={job} onRetry={() => void startRefresh()} onDismiss={() => setJob(null)} />}
-    {notice && <div className="brief-notice" role="status"><CheckCircle2 size={15} /> {notice}<button type="button" className="button button-quiet" onClick={() => setNotice('')}>Dismiss</button></div>}
+    {notice && <div className="alert success" role="status"><CheckCircle2 size={15} /> {notice}<button type="button" className="text-button" onClick={() => setNotice('')}>Dismiss</button></div>}
     {actionError && <div className="alert error" role="alert">{actionError}</div>}
-    {viewing && <div className="brief-viewing-banner">Viewing version {viewing.version} from {formatDate(viewing.generatedAt)} (read only).<button type="button" className="text-button" onClick={() => setViewing(null)}>Back to the current brief</button></div>}
+    {viewing && <div className="alert">Viewing version {viewing.version} from {formatDate(viewing.generatedAt)} (read only).<button type="button" className="text-button" onClick={() => setViewing(null)}>Back to the current brief</button></div>}
     <BriefViewContext.Provider value={contextValue}>
       {shownBrief
         ? <BriefBody brief={shownBrief} completedItemIds={viewing ? [] : page.progress.completedItemIds} onToggle={(itemId, completed) => void toggleItem(itemId, completed)} />
@@ -184,7 +186,7 @@ function BriefView({ id, fixture }: { id: string; fixture: boolean }) {
 
 function EmptyBrief({ code, starting, onGenerate }: { code: string; starting: boolean; onGenerate: () => void }) {
   return <section className="empty-state brief-empty">
-    <div className="empty-icon"><Search size={22} /></div>
+    <Search className="empty-icon" size={20} aria-hidden="true" />
     <h3>No study brief for {code} yet</h3>
     <p>The research agent reads the official exam page and skills outline, the official learning path and practice assessment, and community discussions (forums, videos and blogs). It then writes a cited study brief with a step-by-step checklist. It runs with your OpenAI API key and usually takes a few minutes.</p>
     <button type="button" className="button button-primary" onClick={onGenerate} disabled={starting}>{starting ? <LoaderCircle className="spin" size={15} /> : <Sparkles size={15} />} Generate study brief</button>
