@@ -16,6 +16,8 @@ The frontend runs at `http://localhost:5173`; the API runs at `http://localhost:
 
 ## Resource sharing
 
+Certification descriptions support rich text in both the create and edit forms: bold, italics, headings, lists, quotes, and HTTPS links. Formatting is sanitized on the server and when displayed. Existing plain-text descriptions remain readable and editable. The description limit is 30,000 characters including HTML formatting.
+
 Question sets and PDFs require confirmation that the contributor created the material or has permission to share it. Add source attribution where applicable. Do not upload copied exam questions or restricted content. PDF files are stored outside the public frontend directory and are delivered only through an authenticated API route.
 
 Resource cards (including saved resources) and resource details display quality signals: the last administrator review date, source attribution with a link when supplied, and the number of helpful votes received. Resources without a review or attribution are explicitly labeled. Review dates indicate when an administrator marked a resource reviewed, not a guarantee that its content is current or accurate. Helpful votes represent community feedback, not verification.

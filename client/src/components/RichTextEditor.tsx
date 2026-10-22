@@ -3,11 +3,11 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import { Bold, Heading2, Italic, Link2, List, ListOrdered, Quote } from 'lucide-react'
 
-export function RichTextEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+export function RichTextEditor({ value, onChange, ariaLabel = 'Study notes editor' }: { value: string; onChange: (value: string) => void; ariaLabel?: string }) {
   const editor = useEditor({
     extensions: [StarterKit, Link.configure({ openOnClick: false, protocols: ['https'] })], content: value,
-    onUpdate: ({ editor: current }) => onChange(current.getHTML()),
-    editorProps: { attributes: { class: 'rich-editor-content', 'aria-label': 'Study notes editor' } },
+    onUpdate: ({ editor: current }) => onChange(current.isEmpty ? '' : current.getHTML()),
+    editorProps: { attributes: { class: 'rich-editor-content', 'aria-label': ariaLabel, role: 'textbox', 'aria-multiline': 'true' } },
   })
   if (!editor) return null
   const actions = [

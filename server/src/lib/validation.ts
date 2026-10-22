@@ -5,7 +5,7 @@ export const certificationSchema = z.object({
   provider: z.string().trim().min(1).max(80),
   code: z.string().trim().min(1).max(40).regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/),
   title: z.string().trim().min(1).max(160),
-  description: z.string().trim().max(2000).default(''),
+  description: z.string().trim().max(30000).default('').transform((value) => /<\/?[a-z][^>]*>/i.test(value) ? sanitizeRichText(value) : value),
   status: z.enum(['ACTIVE', 'RETIRED']).default('ACTIVE'),
   examVersion: z.string().trim().max(80).default(''),
   examUpdatedAt: z.string().datetime().nullable().default(null),
@@ -40,6 +40,15 @@ export const resourceSchema = resourceMetadataSchema.extend({
   content: z.record(z.string(), z.unknown()),
 })
 
+function sanitizeRichText(html: string) {
+  return sanitizeHtml(html, {
+    allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'code', 'pre'],
+    allowedAttributes: { a: ['href', 'target', 'rel'] },
+    allowedSchemes: ['https'],
+    allowProtocolRelative: false,
+  })
+}
+
 export function validateResourceContent(type: 'QUESTION_SET' | 'RICH_TEXT' | 'LINK', content: Record<string, unknown>, rightsConfirmed: boolean) {
   if (type === 'QUESTION_SET') {
     if (!rightsConfirmed) throw new Error('Confirm that you created these questions or have permission to share them.')
@@ -51,11 +60,7 @@ export function validateResourceContent(type: 'QUESTION_SET' | 'RICH_TEXT' | 'LI
   if (type === 'RICH_TEXT') {
     const parsed = z.object({ html: z.string().max(30000) }).safeParse(content)
     if (!parsed.success) throw new Error('Study notes are invalid or too long.')
-    return JSON.stringify({ html: sanitizeHtml(parsed.data.html, {
-      allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h2', 'h3', 'ul', 'ol', 'li', 'blockquote', 'a', 'code', 'pre'],
-      allowedAttributes: { a: ['href', 'target', 'rel'] },
-      allowedSchemes: ['https'],
-    }) })
+    return JSON.stringify({ html: sanitizeRichText(parsed.data.html) })
   }
 
   const parsed = z.object({ url: z.string().url().max(2048) }).safeParse(content)
