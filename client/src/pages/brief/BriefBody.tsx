@@ -1,5 +1,5 @@
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react'
-import { AlertTriangle, ArrowRight, BookOpen, ClipboardCheck, ClipboardList, ExternalLink, FileText, FolderGit2, GraduationCap, Headphones, History, Link2, ListChecks, MessagesSquare, MonitorPlay, Newspaper, Presentation, Route, Video } from 'lucide-react'
+import { useEffect, useRef, type MouseEvent } from 'react'
+import { AlertTriangle, BookOpen, ClipboardCheck, ClipboardList, ExternalLink, FileText, FolderGit2, GraduationCap, Headphones, History, Link2, ListChecks, MessagesSquare, MonitorPlay, Newspaper, Presentation, Route, Video } from 'lucide-react'
 import type { CommunityResource, KnownGap, LearningPathItem, StudyBriefDto } from '../../lib/contracts'
 import { Tabs } from '../../components/ui/Tabs'
 import { useTabParam } from '../../hooks/useTabParam'
@@ -54,11 +54,10 @@ export function BriefBody({ brief, completedItemIds, onToggle, onOpenVersions }:
     }
   }
 
-  const done = content.checklist.filter((item) => completedItemIds.includes(item.id)).length
 
   return <div className="brief-body" id={TABS_ANCHOR}>
     <Tabs mode="tabs" label="Study brief sections" defaultTab="summary" className="brief-tabs" tabs={[
-      { id: 'summary', label: 'Summary', icon: <FileText size={16} aria-hidden="true" />, content: <SummaryTab brief={brief} done={done} goTo={goTo} onOpenVersions={onOpenVersions} /> },
+      { id: 'summary', label: 'Summary', icon: <FileText size={16} aria-hidden="true" />, content: <SummaryTab brief={brief} goTo={goTo} onOpenVersions={onOpenVersions} /> },
       { id: 'exam', label: 'Exam', icon: <ClipboardList size={16} aria-hidden="true" />, content: <ExamTab brief={brief} /> },
       { id: 'checklist', label: 'Checklist', icon: <ListChecks size={16} aria-hidden="true" />, content: <ChecklistSection items={content.checklist} completedItemIds={completedItemIds} onToggle={onToggle} /> },
       { id: 'gaps', label: 'Gaps', icon: <AlertTriangle size={16} aria-hidden="true" />, content: <GapsTab gaps={content.knownGaps} /> },
@@ -67,26 +66,15 @@ export function BriefBody({ brief, completedItemIds, onToggle, onOpenVersions }:
   </div>
 }
 
-function SummaryTab({ brief, done, goTo, onOpenVersions }: { brief: StudyBriefDto; done: number; goTo: (tab: TabId) => (event: MouseEvent<HTMLAnchorElement>) => void; onOpenVersions: () => void }) {
+function SummaryTab({ brief, goTo, onOpenVersions }: { brief: StudyBriefDto; goTo: (tab: TabId) => (event: MouseEvent<HTMLAnchorElement>) => void; onOpenVersions: () => void }) {
   const { content } = brief
   const notices = [content.certification.retirementNotice, ...content.warnings].filter((value): value is string => Boolean(value))
-  const total = content.checklist.length
   return <div className="brief-tab-stack">
     <section className="brief-section brief-summary" aria-labelledby="brief-summary-heading">
       <h2 id="brief-summary-heading" className="sr-only">Summary</h2>
       <p className="brief-summary-text">{content.summary}</p>
       {notices.length > 0 && <ul className="brief-warnings">{notices.map((warning, index) => <li key={index} className="alert warning"><AlertTriangle size={14} aria-hidden="true" /> {warning}</li>)}</ul>}
     </section>
-    <nav className="brief-start" aria-labelledby="brief-start-heading">
-      <h2 id="brief-start-heading">Where to start</h2>
-      <ul>
-        <StartLink href="?tab=exam" onClick={goTo('exam')} icon={<ClipboardList size={20} aria-hidden="true" />} title="Read how the exam works" detail="Format, cost, passing score and the skills measured." />
-        <StartLink primary href="?tab=checklist" onClick={goTo('checklist')} icon={<ListChecks size={20} aria-hidden="true" />}
-          title={done > 0 && done < total ? 'Continue the checklist' : 'Start the checklist'}
-          detail={total ? `${done} of ${total} steps done. A step-by-step plan from orientation to exam day.` : 'A step-by-step plan from orientation to exam day.'} />
-        <StartLink href="?tab=gaps" onClick={goTo('gaps')} icon={<AlertTriangle size={20} aria-hidden="true" />} title="See what the official material misses" detail={content.knownGaps.length ? `${content.knownGaps.length} known gaps reported by candidates.` : 'Where candidates say the official material falls short.'} />
-      </ul>
-    </nav>
     <footer className="brief-about" aria-label="About this brief">
       <h2>About this brief</h2>
       <p>
@@ -98,16 +86,6 @@ function SummaryTab({ brief, done, goTo, onOpenVersions }: { brief: StudyBriefDt
       </p>
     </footer>
   </div>
-}
-
-function StartLink({ href, onClick, icon, title, detail, primary }: { href: string; onClick: (event: MouseEvent<HTMLAnchorElement>) => void; icon: ReactNode; title: string; detail: string; primary?: boolean }) {
-  return <li>
-    <a className={`brief-start-link${primary ? ' is-primary' : ''}`} href={href} onClick={onClick}>
-      <span className="brief-start-icon">{icon}</span>
-      <span className="brief-start-text"><strong>{title}</strong><span>{detail}</span></span>
-      <ArrowRight className="brief-start-arrow" size={18} aria-hidden="true" />
-    </a>
-  </li>
 }
 
 function ExamTab({ brief }: { brief: StudyBriefDto }) {
