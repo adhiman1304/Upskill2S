@@ -1,0 +1,3 @@
+# Seed catalog
+
+`catalog.json` is an array of well-known certification exams used to pre-populate the catalog. Each entry has `provider` (vendor display name), `code` (exam code as the vendor writes it), `title` (official exam or credential name), `officialUrl` (HTTPS link to the official exam page, or `null`), and `aliases` (alternative names and codes used for search). The seed script (`seed.ts`, owned by workstream D) upserts each entry as a `Certification` with `isCatalog = true`, created by the system user (`tenantId = "system"`, `objectId = "system"`), keyed by normalized provider and code.

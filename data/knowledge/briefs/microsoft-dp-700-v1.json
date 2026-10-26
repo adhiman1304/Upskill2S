@@ -1,0 +1,872 @@
+{
+  "exportedAt": "2026-10-21T22:12:01.737Z",
+  "certification": {
+    "provider": "Microsoft",
+    "code": "DP-700",
+    "title": "Microsoft Certified: Fabric Data Engineer Associate"
+  },
+  "version": 1,
+  "status": "CURRENT",
+  "model": "fixture",
+  "sourceCount": 22,
+  "generatedAt": "2026-10-21T21:46:50.546Z",
+  "inputTokens": 0,
+  "outputTokens": 0,
+  "content": {
+    "certification": {
+      "provider": "Microsoft",
+      "code": "DP-700",
+      "title": "Implementing Data Engineering Solutions Using Microsoft Fabric",
+      "officialUrl": "https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/",
+      "examVersion": "Skills measured as of October 19, 2026",
+      "lastOfficialUpdate": "2026-10-19",
+      "retirementNotice": null
+    },
+    "summary": "DP-700 is the exam for the Microsoft Certified: Fabric Data Engineer Associate certification. It targets data engineers who ingest, transform, secure, monitor and optimize analytics solutions in Microsoft Fabric using SQL, PySpark and KQL. The three skill areas are weighted equally, so plan real hands-on time in a Fabric trial capacity, and give Real-Time Intelligence and KQL more attention than the official learning paths suggest.",
+    "examFormat": {
+      "durationMinutes": 100,
+      "questionCount": "40-60 (typically around 50, including one case study)",
+      "passingScore": "700 / 1000",
+      "cost": "USD 165 (US pricing; varies by country)",
+      "languages": [
+        "English",
+        "Japanese",
+        "Chinese (Simplified)",
+        "German",
+        "French",
+        "Spanish",
+        "Portuguese (Brazil)"
+      ],
+      "deliveryOptions": [
+        "Online proctored (Pearson VUE)",
+        "Pearson VUE test center"
+      ],
+      "notes": "Role-based Microsoft exams allow access to Microsoft Learn during the exam, but searching costs time. Localized versions are updated about eight weeks after the English version; you can request 30 extra minutes if the exam is not available in your language."
+    },
+    "skillsMeasured": [
+      {
+        "id": "implement-and-manage-an-analytics-solution",
+        "title": "Implement and manage an analytics solution (30–35%)",
+        "weightPercent": 32.5,
+        "subtopics": [
+          "Configure Fabric workspace settings: Spark, domains, OneLake and Apache Airflow",
+          "Implement lifecycle management: version control, database projects, deployment pipelines",
+          "Configure security and governance: workspace and item access, row/column/object/folder-level security, dynamic data masking, sensitivity labels, endorsement, audit logs, OneLake security",
+          "Orchestrate processes: choose between Dataflow Gen2, pipelines and notebooks; schedules and event-based triggers; parameters and dynamic expressions"
+        ],
+        "sourceIds": [
+          "study-guide-for-exam-dp-700",
+          "exam-dp-700-implementing-data-engineering-solutions"
+        ]
+      },
+      {
+        "id": "ingest-and-transform-data",
+        "title": "Ingest and transform data (30–35%)",
+        "weightPercent": 32.5,
+        "subtopics": [
+          "Design and implement full and incremental loads, dimensional model loading and streaming loading patterns",
+          "Batch: choose a data store and transformation tool, OneLake shortcuts, mirroring, pipelines, PySpark/SQL/KQL transforms, duplicates, missing and late-arriving data",
+          "Streaming: choose a streaming engine, native tables vs. shortcuts and query acceleration in Real-Time Intelligence, Eventstream, Spark structured streaming, KQL, windowing functions"
+        ],
+        "sourceIds": [
+          "study-guide-for-exam-dp-700",
+          "what-is-real-time-intelligence-in-fabric"
+        ]
+      },
+      {
+        "id": "monitor-and-optimize-an-analytics-solution",
+        "title": "Monitor and optimize an analytics solution (30–35%)",
+        "weightPercent": 32.5,
+        "subtopics": [
+          "Monitor ingestion, transformation and semantic model refresh; configure alerts",
+          "Identify and resolve errors in pipelines, Dataflow Gen2, notebooks, Eventhouse, Eventstream, T-SQL and OneLake shortcuts",
+          "Optimize Lakehouse tables, pipelines, warehouses, Eventstream and Eventhouse, Spark and query performance"
+        ],
+        "sourceIds": [
+          "study-guide-for-exam-dp-700",
+          "delta-lake-table-optimization-and-v-order"
+        ]
+      }
+    ],
+    "officialLearningPath": [
+      {
+        "id": "course-dp-700t00-microsoft-fabric-data-engineer",
+        "title": "Course DP-700T00: Microsoft Fabric Data Engineer",
+        "url": "https://learn.microsoft.com/en-us/training/courses/dp-700t00",
+        "type": "instructor_led",
+        "estimatedMinutes": 1440,
+        "notes": "Four-day instructor-led course; the same modules are available self-paced on Microsoft Learn.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "ingest-data-with-microsoft-fabric",
+        "title": "Ingest data with Microsoft Fabric",
+        "url": "https://learn.microsoft.com/en-us/training/paths/ingest-data-with-microsoft-fabric/",
+        "type": "learning_path",
+        "estimatedMinutes": 240,
+        "notes": "Dataflows Gen2, pipelines and notebooks for ingestion.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "implement-a-lakehouse-with-microsoft-fabric",
+        "title": "Implement a Lakehouse with Microsoft Fabric",
+        "url": "https://learn.microsoft.com/en-us/training/paths/implement-lakehouse-microsoft-fabric/",
+        "type": "learning_path",
+        "estimatedMinutes": 300,
+        "notes": "Lakehouses, Delta tables, Spark and medallion architecture.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "implement-real-time-intelligence-with-microsoft-fabric",
+        "title": "Implement Real-Time Intelligence with Microsoft Fabric",
+        "url": "https://learn.microsoft.com/en-us/training/paths/explore-real-time-analytics-microsoft-fabric/",
+        "type": "learning_path",
+        "estimatedMinutes": 210,
+        "notes": "Eventstream, Eventhouse and KQL. Community reports say the exam goes deeper than this path.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer",
+          "reddit-passed-dp-700-kql-heavier-than-expected"
+        ]
+      },
+      {
+        "id": "implement-a-data-warehouse-with-microsoft-fabric",
+        "title": "Implement a data warehouse with Microsoft Fabric",
+        "url": "https://learn.microsoft.com/en-us/training/paths/work-with-data-warehouses-using-microsoft-fabric/",
+        "type": "learning_path",
+        "estimatedMinutes": 240,
+        "notes": "T-SQL loading, warehouse security and monitoring.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "manage-a-microsoft-fabric-environment",
+        "title": "Manage a Microsoft Fabric environment",
+        "url": "https://learn.microsoft.com/en-us/training/paths/manage-microsoft-fabric-environment/",
+        "type": "learning_path",
+        "estimatedMinutes": 180,
+        "notes": "Lifecycle management, deployment pipelines, security and monitoring.",
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "dp-700-practice-assessment",
+        "title": "Free DP-700 practice assessment",
+        "url": "https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/practice/assessment?assessment-type=practice&assessmentId=90",
+        "type": "practice_assessment",
+        "estimatedMinutes": 60,
+        "notes": "50 questions with explanations and links to docs; retake until you consistently score above 80%.",
+        "sourceIds": [
+          "microsoft-certified-fabric-data-engineer-associate"
+        ]
+      },
+      {
+        "id": "exam-sandbox",
+        "title": "Microsoft exam sandbox",
+        "url": "https://aka.ms/examdemo",
+        "type": "exam_sandbox",
+        "estimatedMinutes": 20,
+        "notes": "Try the exam interface, question types and the case study layout.",
+        "sourceIds": [
+          "study-guide-for-exam-dp-700"
+        ]
+      },
+      {
+        "id": "fabric-trial-capacity",
+        "title": "Microsoft Fabric trial capacity",
+        "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial",
+        "type": "docs",
+        "estimatedMinutes": 15,
+        "notes": "Free 60-day trial capacity for hands-on practice.",
+        "sourceIds": [
+          "fabric-trial-capacity"
+        ]
+      }
+    ],
+    "communityResources": [
+      {
+        "id": "learn-microsoft-fabric-with-will-dp-700-series",
+        "title": "DP-700 exam preparation series",
+        "url": "https://www.youtube.com/@LearnMicrosoftFabric",
+        "kind": "video",
+        "author": "Will Needham (Learn Microsoft Fabric with Will)",
+        "publishedAt": "2025-01-15",
+        "whyRecommended": "Walks through every skill area with demos; frequently credited in pass reports on r/MicrosoftFabric.",
+        "sourceIds": [
+          "learn-microsoft-fabric-with-will",
+          "reddit-passed-dp-700-kql-heavier-than-expected"
+        ]
+      },
+      {
+        "id": "aleksi-partanen-dp-700-course",
+        "title": "DP-700 full course",
+        "url": "https://www.youtube.com/@AleksiPartanenTech",
+        "kind": "video",
+        "author": "Aleksi Partanen",
+        "publishedAt": "2025-03-02",
+        "whyRecommended": "Free long-form course with hands-on labs that mirror the skills outline, including Eventstream and KQL.",
+        "sourceIds": [
+          "aleksi-partanen-tech"
+        ]
+      },
+      {
+        "id": "guy-in-a-cube-fabric-videos",
+        "title": "Guy in a Cube Microsoft Fabric videos",
+        "url": "https://www.youtube.com/@GuyInACube",
+        "kind": "video",
+        "author": "Adam Saxton and Patrick LeBlanc",
+        "publishedAt": null,
+        "whyRecommended": "Short, practical videos on Fabric features such as deployment pipelines, Git integration and OneLake shortcuts.",
+        "sourceIds": [
+          "guy-in-a-cube"
+        ]
+      },
+      {
+        "id": "exam-readiness-zone-dp-700",
+        "title": "Exam Readiness Zone: preparing for DP-700",
+        "url": "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/",
+        "kind": "video",
+        "author": "Microsoft Learn",
+        "publishedAt": null,
+        "whyRecommended": "Official walkthrough of each skill area with sample questions explained.",
+        "sourceIds": [
+          "exam-readiness-zone"
+        ]
+      },
+      {
+        "id": "measureup-dp-700-practice-test",
+        "title": "MeasureUp official practice test for DP-700",
+        "url": "https://www.measureup.com/",
+        "kind": "practice_questions",
+        "author": "MeasureUp",
+        "publishedAt": null,
+        "whyRecommended": "Microsoft's official practice test partner; original questions with explanations, not dumps.",
+        "sourceIds": [
+          "measureup-microsoft-official-practice-tests"
+        ]
+      },
+      {
+        "id": "microsoft-fabric-samples",
+        "title": "microsoft/fabric-samples",
+        "url": "https://github.com/microsoft/fabric-samples",
+        "kind": "github",
+        "author": "Microsoft",
+        "publishedAt": null,
+        "whyRecommended": "Notebooks and end-to-end samples to practise PySpark, Delta and Real-Time Intelligence scenarios.",
+        "sourceIds": [
+          "microsoft-fabric-samples"
+        ]
+      },
+      {
+        "id": "r-microsoftfabric",
+        "title": "r/MicrosoftFabric",
+        "url": "https://www.reddit.com/r/MicrosoftFabric/",
+        "kind": "forum",
+        "author": null,
+        "publishedAt": null,
+        "whyRecommended": "Active community with recent DP-700 pass reports and answers from Microsoft product team members.",
+        "sourceIds": [
+          "reddit-passed-dp-700-kql-heavier-than-expected",
+          "reddit-dp-700-study-plan-and-resources"
+        ]
+      },
+      {
+        "id": "fabric-community-forums",
+        "title": "Microsoft Fabric Community forums",
+        "url": "https://community.fabric.microsoft.com/",
+        "kind": "forum",
+        "author": "Microsoft",
+        "publishedAt": null,
+        "whyRecommended": "Searchable answers for error-handling scenarios that the exam covers.",
+        "sourceIds": [
+          "fabric-community"
+        ]
+      }
+    ],
+    "knownGaps": [
+      {
+        "id": "kql-depth-in-real-time-intelligence",
+        "title": "KQL and Real-Time Intelligence are deeper than the learning path",
+        "detail": "Several candidates report multiple questions that require reading or completing KQL queries (summarize, bin, windowing, materialized views, update policies) and choosing between Eventhouse native tables, shortcuts and query acceleration. The official path only introduces KQL basics.",
+        "recommendation": "Work through the KQL quick reference and write windowing and aggregation queries against a sample Eventhouse until you can read them without running them.",
+        "confidence": "high",
+        "sourceIds": [
+          "reddit-passed-dp-700-kql-heavier-than-expected",
+          "reddit-dp-700-study-plan-and-resources",
+          "kql-quick-reference"
+        ]
+      },
+      {
+        "id": "choosing-dataflow-pipeline-or-notebook",
+        "title": "Scenario questions on choosing Dataflow Gen2, pipeline or notebook",
+        "detail": "Many questions describe a scenario (skills of the team, volume, low-code requirement, need for PySpark) and ask which tool to use. The modules teach each tool separately but not the trade-offs.",
+        "recommendation": "Build a one-page decision table for Dataflow Gen2, pipelines, notebooks, KQL and T-SQL with their strengths, and test it against the practice assessment.",
+        "confidence": "high",
+        "sourceIds": [
+          "fabric-decision-guide-copy-activity-dataflow-or-spark",
+          "reddit-dp-700-study-plan-and-resources"
+        ]
+      },
+      {
+        "id": "granular-security-and-onelake-security",
+        "title": "Granular security: OneLake security, RLS, CLS, OLS and masking",
+        "detail": "Candidates mention detailed questions on which permission level or security feature applies where (workspace roles vs. item permissions vs. OneLake security vs. SQL endpoint security), and dynamic data masking syntax.",
+        "recommendation": "Practise each security layer in a trial workspace and read the OneLake security overview end to end.",
+        "confidence": "medium",
+        "sourceIds": [
+          "onelake-security-overview",
+          "pass-report-blog-dp-700-first-attempt"
+        ]
+      },
+      {
+        "id": "deployment-pipelines-and-git-integration",
+        "title": "Hands-on lifecycle management: Git integration and deployment pipelines",
+        "detail": "Questions on deployment rules, branching with Git integration and database projects assume hands-on experience. The learning path covers them briefly and without exercises for every item type.",
+        "recommendation": "Connect a trial workspace to a Git repository, create a three-stage deployment pipeline, and deploy a lakehouse, notebook and warehouse with deployment rules.",
+        "confidence": "medium",
+        "sourceIds": [
+          "fabric-deployment-pipelines-overview",
+          "pass-report-blog-dp-700-first-attempt"
+        ]
+      },
+      {
+        "id": "troubleshooting-errors-across-items",
+        "title": "Troubleshooting errors across items",
+        "detail": "The monitor-and-optimize area includes resolving errors in pipelines, Dataflow Gen2, notebooks, Eventstream and shortcuts. Candidates say these questions rely on knowing the Monitoring hub and typical error messages, which the modules barely show.",
+        "recommendation": "Deliberately break a pipeline, a notebook and a shortcut in your trial workspace and fix them using the Monitoring hub and item run history.",
+        "confidence": "medium",
+        "sourceIds": [
+          "fabric-monitoring-hub",
+          "reddit-passed-dp-700-kql-heavier-than-expected"
+        ]
+      }
+    ],
+    "checklist": [
+      {
+        "id": "read-the-official-study-guide",
+        "order": 0,
+        "phase": "orient",
+        "title": "Read the official DP-700 study guide",
+        "detail": "Read the skills measured as of October 19, 2026 and the change log. Mark each bullet as known, partly known or new.",
+        "estimatedMinutes": 30,
+        "links": [
+          {
+            "label": "Study guide",
+            "url": "https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700"
+          }
+        ],
+        "sourceIds": [
+          "study-guide-for-exam-dp-700"
+        ]
+      },
+      {
+        "id": "take-the-practice-assessment-as-a-baseline",
+        "order": 1,
+        "phase": "orient",
+        "title": "Take the free practice assessment as a baseline",
+        "detail": "Do it cold, before studying, and note the weakest skill area.",
+        "estimatedMinutes": 60,
+        "links": [
+          {
+            "label": "Practice assessment",
+            "url": "https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/practice/assessment?assessment-type=practice&assessmentId=90"
+          }
+        ],
+        "sourceIds": [
+          "microsoft-certified-fabric-data-engineer-associate"
+        ]
+      },
+      {
+        "id": "start-a-fabric-trial-capacity",
+        "order": 2,
+        "phase": "orient",
+        "title": "Start a Fabric trial capacity",
+        "detail": "Activate the 60-day trial and create a dedicated study workspace. Time your study so the trial covers your exam date.",
+        "estimatedMinutes": 15,
+        "links": [
+          {
+            "label": "Fabric trial",
+            "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial"
+          }
+        ],
+        "sourceIds": [
+          "fabric-trial-capacity"
+        ]
+      },
+      {
+        "id": "book-the-exam",
+        "order": 3,
+        "phase": "orient",
+        "title": "Book the exam for a date 6 to 8 weeks out",
+        "detail": "A fixed date keeps the plan honest. Choose online proctored or a test center.",
+        "estimatedMinutes": 15,
+        "links": [
+          {
+            "label": "Exam page",
+            "url": "https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/"
+          }
+        ],
+        "sourceIds": [
+          "exam-dp-700-implementing-data-engineering-solutions"
+        ]
+      },
+      {
+        "id": "complete-ingest-data-learning-path",
+        "order": 4,
+        "phase": "learn",
+        "title": "Complete the Ingest data with Microsoft Fabric path",
+        "detail": "Do every exercise in your trial workspace, not just the reading.",
+        "estimatedMinutes": 240,
+        "links": [
+          {
+            "label": "Learning path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/ingest-data-with-microsoft-fabric/"
+          }
+        ],
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "complete-lakehouse-learning-path",
+        "order": 5,
+        "phase": "learn",
+        "title": "Complete the Implement a Lakehouse path",
+        "detail": "Focus on Delta tables, incremental loads, medallion layers and table maintenance (OPTIMIZE, V-Order, VACUUM).",
+        "estimatedMinutes": 300,
+        "links": [
+          {
+            "label": "Learning path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/implement-lakehouse-microsoft-fabric/"
+          },
+          {
+            "label": "Delta optimization",
+            "url": "https://learn.microsoft.com/en-us/fabric/data-engineering/delta-optimization-and-v-order"
+          }
+        ],
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer",
+          "delta-lake-table-optimization-and-v-order"
+        ]
+      },
+      {
+        "id": "complete-real-time-intelligence-learning-path",
+        "order": 6,
+        "phase": "learn",
+        "title": "Complete the Real-Time Intelligence path",
+        "detail": "Build an Eventstream into an Eventhouse and query it with KQL.",
+        "estimatedMinutes": 210,
+        "links": [
+          {
+            "label": "Learning path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/explore-real-time-analytics-microsoft-fabric/"
+          }
+        ],
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer",
+          "what-is-real-time-intelligence-in-fabric"
+        ]
+      },
+      {
+        "id": "go-deeper-on-kql",
+        "order": 7,
+        "phase": "learn",
+        "title": "Go deeper on KQL than the learning path",
+        "detail": "Practise summarize, bin, make-series, joins, windowing and update policies. This is the most cited gap in pass reports.",
+        "estimatedMinutes": 240,
+        "links": [
+          {
+            "label": "KQL quick reference",
+            "url": "https://learn.microsoft.com/en-us/kusto/query/kql-quick-reference"
+          }
+        ],
+        "sourceIds": [
+          "kql-quick-reference",
+          "reddit-passed-dp-700-kql-heavier-than-expected"
+        ]
+      },
+      {
+        "id": "complete-data-warehouse-learning-path",
+        "order": 8,
+        "phase": "learn",
+        "title": "Complete the data warehouse path",
+        "detail": "Load with T-SQL and COPY INTO, then practise warehouse security and query performance.",
+        "estimatedMinutes": 240,
+        "links": [
+          {
+            "label": "Learning path",
+            "url": "https://learn.microsoft.com/en-us/training/paths/work-with-data-warehouses-using-microsoft-fabric/"
+          }
+        ],
+        "sourceIds": [
+          "course-dp-700t00-microsoft-fabric-data-engineer"
+        ]
+      },
+      {
+        "id": "practise-security-layers",
+        "order": 9,
+        "phase": "learn",
+        "title": "Practise every security layer hands-on",
+        "detail": "Configure workspace roles, item permissions, OneLake security, RLS, CLS, OLS and dynamic data masking on the same data.",
+        "estimatedMinutes": 120,
+        "links": [
+          {
+            "label": "OneLake security",
+            "url": "https://learn.microsoft.com/en-us/fabric/onelake/security/get-started-security"
+          }
+        ],
+        "sourceIds": [
+          "onelake-security-overview"
+        ]
+      },
+      {
+        "id": "build-git-and-deployment-pipeline",
+        "order": 10,
+        "phase": "learn",
+        "title": "Set up Git integration and a deployment pipeline",
+        "detail": "Connect the workspace to Git and deploy items across three stages with deployment rules.",
+        "estimatedMinutes": 120,
+        "links": [
+          {
+            "label": "Deployment pipelines",
+            "url": "https://learn.microsoft.com/en-us/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines"
+          }
+        ],
+        "sourceIds": [
+          "fabric-deployment-pipelines-overview"
+        ]
+      },
+      {
+        "id": "write-a-tool-decision-table",
+        "order": 11,
+        "phase": "practice",
+        "title": "Write a decision table for Dataflow Gen2, pipeline and notebook",
+        "detail": "One page that says when each tool (and KQL or T-SQL) is the right choice. Check it against the decision guide.",
+        "estimatedMinutes": 45,
+        "links": [
+          {
+            "label": "Decision guide",
+            "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/decision-guide-pipeline-dataflow-spark"
+          }
+        ],
+        "sourceIds": [
+          "fabric-decision-guide-copy-activity-dataflow-or-spark"
+        ]
+      },
+      {
+        "id": "break-and-fix-items",
+        "order": 12,
+        "phase": "practice",
+        "title": "Break and fix a pipeline, a notebook and a shortcut",
+        "detail": "Diagnose each failure from the Monitoring hub and run history, as the troubleshooting questions expect.",
+        "estimatedMinutes": 90,
+        "links": [
+          {
+            "label": "Monitoring hub",
+            "url": "https://learn.microsoft.com/en-us/fabric/admin/monitoring-hub"
+          }
+        ],
+        "sourceIds": [
+          "fabric-monitoring-hub"
+        ]
+      },
+      {
+        "id": "work-through-a-video-course",
+        "order": 13,
+        "phase": "practice",
+        "title": "Work through one full community video course",
+        "detail": "Pick one series and follow along in your workspace rather than watching passively.",
+        "estimatedMinutes": 600,
+        "links": [
+          {
+            "label": "Learn Microsoft Fabric with Will",
+            "url": "https://www.youtube.com/@LearnMicrosoftFabric"
+          },
+          {
+            "label": "Aleksi Partanen Tech",
+            "url": "https://www.youtube.com/@AleksiPartanenTech"
+          }
+        ],
+        "sourceIds": [
+          "learn-microsoft-fabric-with-will",
+          "aleksi-partanen-tech"
+        ]
+      },
+      {
+        "id": "score-80-on-the-practice-assessment",
+        "order": 14,
+        "phase": "review",
+        "title": "Score 80% or more on the practice assessment twice",
+        "detail": "Read the explanation for every miss and follow the linked docs.",
+        "estimatedMinutes": 120,
+        "links": [
+          {
+            "label": "Practice assessment",
+            "url": "https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/practice/assessment?assessment-type=practice&assessmentId=90"
+          }
+        ],
+        "sourceIds": [
+          "microsoft-certified-fabric-data-engineer-associate"
+        ]
+      },
+      {
+        "id": "review-known-gaps",
+        "order": 15,
+        "phase": "review",
+        "title": "Review the known gaps in this brief",
+        "detail": "Revisit KQL, tool choice, security layers, lifecycle management and troubleshooting one final time.",
+        "estimatedMinutes": 90,
+        "links": [],
+        "sourceIds": [
+          "reddit-dp-700-study-plan-and-resources"
+        ]
+      },
+      {
+        "id": "try-the-exam-sandbox",
+        "order": 16,
+        "phase": "exam_day",
+        "title": "Try the exam sandbox and plan your time",
+        "detail": "Practise the case study layout and decide how much time to reserve for it. Use Microsoft Learn during the exam only for quick lookups.",
+        "estimatedMinutes": 20,
+        "links": [
+          {
+            "label": "Exam sandbox",
+            "url": "https://aka.ms/examdemo"
+          }
+        ],
+        "sourceIds": [
+          "study-guide-for-exam-dp-700",
+          "pass-report-blog-dp-700-first-attempt"
+        ]
+      },
+      {
+        "id": "run-the-system-test",
+        "order": 17,
+        "phase": "exam_day",
+        "title": "Run the online proctoring system test the day before",
+        "detail": "Check your webcam, network and a clear desk; have ID ready 30 minutes before the appointment.",
+        "estimatedMinutes": 20,
+        "links": [
+          {
+            "label": "Exam page",
+            "url": "https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/"
+          }
+        ],
+        "sourceIds": [
+          "exam-dp-700-implementing-data-engineering-solutions"
+        ]
+      }
+    ],
+    "warnings": [
+      "The skills outline changed on 2026-10-19 (minor changes to workspace settings and performance optimization). Some third-party courses may predate it.",
+      "Exam price varies by country; check the exam page for your region."
+    ],
+    "sources": [
+      {
+        "id": "study-guide-for-exam-dp-700",
+        "url": "https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700",
+        "title": "Study Guide for Exam DP-700: Implementing Data Engineering Solutions Using Microsoft Fabric",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:12:00.000Z",
+        "snippet": "Skills measured as of October 19, 2026: three skill areas, each weighted 30–35%."
+      },
+      {
+        "id": "exam-dp-700-implementing-data-engineering-solutions",
+        "url": "https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/",
+        "title": "Exam DP-700: Implementing Data Engineering Solutions Using Microsoft Fabric",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:12:00.000Z",
+        "snippet": "Exam price, languages and scheduling through Pearson VUE."
+      },
+      {
+        "id": "microsoft-certified-fabric-data-engineer-associate",
+        "url": "https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/",
+        "title": "Microsoft Certified: Fabric Data Engineer Associate",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:12:00.000Z",
+        "snippet": "Certification overview with a free practice assessment."
+      },
+      {
+        "id": "course-dp-700t00-microsoft-fabric-data-engineer",
+        "url": "https://learn.microsoft.com/en-us/training/courses/dp-700t00",
+        "title": "Course DP-700T00: Microsoft Fabric Data Engineer",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:13:00.000Z",
+        "snippet": "Instructor-led course and the self-paced learning paths it maps to."
+      },
+      {
+        "id": "fabric-trial-capacity",
+        "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/fabric-trial",
+        "title": "Fabric trial capacity",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:13:00.000Z",
+        "snippet": "A free trial capacity for 60 days."
+      },
+      {
+        "id": "what-is-real-time-intelligence-in-fabric",
+        "url": "https://learn.microsoft.com/en-us/fabric/real-time-intelligence/overview",
+        "title": "What is Real-Time Intelligence in Fabric?",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:13:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "delta-lake-table-optimization-and-v-order",
+        "url": "https://learn.microsoft.com/en-us/fabric/data-engineering/delta-optimization-and-v-order",
+        "title": "Delta Lake table optimization and V-Order",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:13:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "kql-quick-reference",
+        "url": "https://learn.microsoft.com/en-us/kusto/query/kql-quick-reference",
+        "title": "KQL quick reference",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:14:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "onelake-security-overview",
+        "url": "https://learn.microsoft.com/en-us/fabric/onelake/security/get-started-security",
+        "title": "OneLake security overview",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:14:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "fabric-deployment-pipelines-overview",
+        "url": "https://learn.microsoft.com/en-us/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines",
+        "title": "Introduction to deployment pipelines",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:14:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "fabric-decision-guide-copy-activity-dataflow-or-spark",
+        "url": "https://learn.microsoft.com/en-us/fabric/fundamentals/decision-guide-pipeline-dataflow-spark",
+        "title": "Fabric decision guide: copy activity, dataflow, or Spark",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:14:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "fabric-monitoring-hub",
+        "url": "https://learn.microsoft.com/en-us/fabric/admin/monitoring-hub",
+        "title": "Use the Monitor hub",
+        "publisher": "learn.microsoft.com",
+        "kind": "official",
+        "retrievedAt": "2026-10-21T09:14:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "exam-readiness-zone",
+        "url": "https://learn.microsoft.com/en-us/shows/exam-readiness-zone/",
+        "title": "Exam Readiness Zone",
+        "publisher": "learn.microsoft.com",
+        "kind": "video",
+        "retrievedAt": "2026-10-21T09:15:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "reddit-passed-dp-700-kql-heavier-than-expected",
+        "url": "https://www.reddit.com/r/MicrosoftFabric/",
+        "title": "r/MicrosoftFabric: DP-700 pass reports",
+        "publisher": "reddit.com",
+        "kind": "forum",
+        "retrievedAt": "2026-10-21T09:16:00.000Z",
+        "snippet": "Sample summary: pass reports often mention KQL and Real-Time Intelligence questions beyond the learning path."
+      },
+      {
+        "id": "reddit-dp-700-study-plan-and-resources",
+        "url": "https://www.reddit.com/r/MicrosoftFabric/wiki/index/",
+        "title": "r/MicrosoftFabric wiki: study resources",
+        "publisher": "reddit.com",
+        "kind": "forum",
+        "retrievedAt": "2026-10-21T09:16:00.000Z",
+        "snippet": "Sample summary: community-maintained list of Fabric learning and exam resources."
+      },
+      {
+        "id": "pass-report-blog-dp-700-first-attempt",
+        "url": "https://medium.com/tag/dp-700",
+        "title": "Medium: DP-700 articles",
+        "publisher": "medium.com",
+        "kind": "blog",
+        "retrievedAt": "2026-10-21T09:16:00.000Z",
+        "snippet": "Sample summary: candidate write-ups covering security and lifecycle management questions."
+      },
+      {
+        "id": "learn-microsoft-fabric-with-will",
+        "url": "https://www.youtube.com/@LearnMicrosoftFabric",
+        "title": "Learn Microsoft Fabric with Will",
+        "publisher": "youtube.com",
+        "kind": "video",
+        "retrievedAt": "2026-10-21T09:17:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "aleksi-partanen-tech",
+        "url": "https://www.youtube.com/@AleksiPartanenTech",
+        "title": "Aleksi Partanen Tech",
+        "publisher": "youtube.com",
+        "kind": "video",
+        "retrievedAt": "2026-10-21T09:17:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "guy-in-a-cube",
+        "url": "https://www.youtube.com/@GuyInACube",
+        "title": "Guy in a Cube",
+        "publisher": "youtube.com",
+        "kind": "video",
+        "retrievedAt": "2026-10-21T09:17:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "measureup-microsoft-official-practice-tests",
+        "url": "https://www.measureup.com/",
+        "title": "MeasureUp: Microsoft official practice tests",
+        "publisher": "measureup.com",
+        "kind": "course",
+        "retrievedAt": "2026-10-21T09:18:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "microsoft-fabric-samples",
+        "url": "https://github.com/microsoft/fabric-samples",
+        "title": "microsoft/fabric-samples",
+        "publisher": "github.com",
+        "kind": "community",
+        "retrievedAt": "2026-10-21T09:18:00.000Z",
+        "snippet": null
+      },
+      {
+        "id": "fabric-community",
+        "url": "https://community.fabric.microsoft.com/",
+        "title": "Microsoft Fabric Community",
+        "publisher": "community.fabric.microsoft.com",
+        "kind": "forum",
+        "retrievedAt": "2026-10-21T09:18:00.000Z",
+        "snippet": null
+      }
+    ]
+  }
+}

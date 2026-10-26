@@ -1,0 +1,15 @@
+/* Settings: what is unique to this page. */
+.settings-page .alert { margin-top: 0; }
+.key-form { display: grid; gap: var(--space-3); max-width: 560px; }
+.key-form .alert { margin: 0; }
+.key-input { position: relative; display: block; }
+.key-input input { padding-right: 44px; font-family: var(--font-mono); }
+.key-toggle { position: absolute; top: 50%; right: 4px; transform: translateY(-50%); }
+.key-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.key-remove { color: var(--color-error); }
+.key-note { max-width: 640px; margin-top: var(--space-3); color: var(--color-text-muted); font-size: var(--text-sm); }
+.model-list { margin: 0; border-top: 1px solid var(--color-border); }
+.model-list > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.model-list dt { font-weight: var(--weight-medium); }
+.model-list dd { display: grid; justify-items: start; gap: 2px; margin: 0; }
+.model-list small { color: var(--color-text-muted); }

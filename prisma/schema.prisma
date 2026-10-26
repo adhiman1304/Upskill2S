@@ -21,6 +21,13 @@ model User {
   moderatedResources Resource[] @relation("ResourceModerator")
   communityPosts CommunityPost[] @relation("CommunityPostAuthor")
   communityComments CommunityComment[] @relation("CommunityCommentAuthor")
+  providerKeys           UserProviderKey[]
+  researchJobs           ResearchJob[]
+  studyBriefs            StudyBrief[]
+  checklistProgress      ChecklistProgress[]
+  briefFeedback          BriefFeedback[]
+  followedCertifications UserCertification[]
+  intakeSessions         IntakeSession[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -38,9 +45,17 @@ model Certification {
   status      String     @default("ACTIVE")
   examVersion String?
   examUpdatedAt DateTime?
+  officialUrl String?
+  aliases     String     @default("[]") // JSON array of alternative names/codes
+  isCatalog   Boolean    @default(false)
+  lastResearchedAt DateTime?
   createdById String
   createdBy   User       @relation(fields: [createdById], references: [id], onDelete: Restrict)
   resources   Resource[]
+  researchJobs      ResearchJob[]
+  studyBriefs       StudyBrief[]
+  checklistProgress ChecklistProgress[]
+  followers         UserCertification[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -151,4 +166,125 @@ model CommunityComment {
 
   @@index([postId, createdAt])
   @@index([authorId, createdAt])
+}
+
+model UserProviderKey {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider        String    @default("openai")
+  encryptedKey    String
+  keyHint         String // last 4 characters
+  lastValidatedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, provider])
+}
+
+model ResearchJob {
+  id              String         @id @default(cuid())
+  kind            String // BRIEF | REFRESH | INTAKE
+  status          String         @default("QUEUED") // QUEUED | RUNNING | SUCCEEDED | FAILED | CANCELLED
+  certificationId String?
+  certification   Certification? @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  intakeSessionId String?
+  requestedById   String
+  requestedBy     User           @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  useServerKey    Boolean        @default(false)
+  progress        String         @default("[]") // JSON [{ at: ISO, message }]
+  error           String?
+  resultBriefId   String?
+  inputTokens     Int?
+  outputTokens    Int?
+  createdAt       DateTime       @default(now())
+  startedAt       DateTime?
+  finishedAt      DateTime?
+
+  @@index([status, createdAt])
+  @@index([certificationId, createdAt])
+  @@index([requestedById, createdAt])
+}
+
+model StudyBrief {
+  id              String              @id @default(cuid())
+  certificationId String
+  certification   Certification       @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  version         Int
+  status          String              @default("CURRENT") // CURRENT | SUPERSEDED
+  content         String // JSON StudyBriefContent
+  model           String
+  sourceCount     Int                 @default(0)
+  inputTokens     Int?
+  outputTokens    Int?
+  jobId           String?
+  requestedById   String
+  requestedBy     User                @relation(fields: [requestedById], references: [id], onDelete: Restrict)
+  generatedAt     DateTime            @default(now())
+  progress        ChecklistProgress[]
+  feedback        BriefFeedback[]
+
+  @@unique([certificationId, version])
+  @@index([certificationId, status])
+}
+
+model ChecklistProgress {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  briefId         String
+  brief           StudyBrief    @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  itemId          String // checklist item id (stable slug produced by the structuring step)
+  completedAt     DateTime      @default(now())
+
+  @@unique([userId, certificationId, itemId])
+}
+
+model BriefFeedback {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  briefId   String
+  brief     StudyBrief @relation(fields: [briefId], references: [id], onDelete: Cascade)
+  itemType  String // brief | checklist | gap | resource | skill | learning_path
+  itemId    String // "brief" for whole-brief feedback
+  verdict   String // accurate | inaccurate | outdated
+  comment   String     @default("")
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, briefId, itemType, itemId])
+  @@index([briefId])
+}
+
+model UserCertification {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  status          String        @default("STUDYING") // PLANNING | STUDYING | PASSED
+  targetDate      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([userId, certificationId])
+}
+
+model IntakeSession {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inputText     String   @default("")
+  attachments   String   @default("[]") // JSON [{ name, mimeType, size, chars }]
+  extractedText String   @default("")
+  status        String   @default("QUEUED") // QUEUED | RUNNING | SUCCEEDED | FAILED
+  result        String? // JSON IntakeResult
+  model         String?
+  error         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }

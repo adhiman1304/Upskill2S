@@ -28,4 +28,4 @@ npm-debug.log*
 Thumbs.db
 
 # TypeScript build metadata.
-*.tsbuildinfo
+*.tsbuildinfoundefined/

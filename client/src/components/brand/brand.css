@@ -1,0 +1,33 @@
+/* Brand: the logotype (bracket-u + "pskill") or, when compact, the tiled mark.
+   --brand-text sizes the logotype, --brand-mark the compact mark. */
+.brand.brand-lockup {
+  --brand-mark: 28px;
+  --brand-text: 24px;
+  display: inline-flex; align-items: center; gap: calc(var(--brand-text) * 0.4);
+  color: var(--color-text); font-size: var(--brand-text); line-height: 1; text-decoration: none;
+}
+.brand.brand-sm { --brand-mark: 22px; --brand-text: 18px; }
+.brand.brand-md { --brand-mark: 28px; --brand-text: 24px; }
+.brand.brand-lg { --brand-mark: 36px; --brand-text: 32px; }
+
+/* Sign-in and setup screens render the default <Brand />; give them the large size. */
+.login-copy > .brand.brand-lockup, .setup-panel > .brand.brand-lockup { --brand-mark: 36px; --brand-text: 32px; }
+.setup-panel > .brand.brand-lockup { justify-self: start; }
+
+.brand-lockup .logo-mark { width: var(--brand-mark); height: var(--brand-mark); flex: none; display: block; }
+
+.wordmark {
+  display: inline-block; font-family: var(--font); font-weight: var(--weight-heading);
+  letter-spacing: -0.02em; line-height: 1; white-space: nowrap; color: inherit;
+}
+/* The bracket u: DM Sans 600 u advance (0.604 em) and x-height (0.505 em),
+   bottom on the baseline. The margin applies the -0.02 em tracking
+   the letter it replaces would have had. */
+.wordmark-u {
+  display: inline-block; width: 0.604em; height: 0.505em; vertical-align: baseline;
+  margin-right: -0.02em; overflow: visible;
+}
+
+@media (max-width: 899px) {
+  .mobile-bar > .brand.brand-lockup:not(.brand-lg) { --brand-mark: 24px; --brand-text: 20px; }
+}

@@ -1,0 +1,6 @@
+// Mirrors docs/AI_REWORK_PLAN.md section 5.2 (types only).
+export interface IntakeRecommendation { rank: number; provider: string; code: string; title: string; officialUrl: string | null; level: 'fundamental' | 'associate' | 'professional' | 'specialty' | 'expert' | 'unknown'; whyFit: string; prerequisites: string[]; estimatedPrepWeeks: number | null; matchedSignals: string[] }
+/** A certification the person already holds, extracted from their text and documents (workstream M). `saved` is true once POST /api/intake/:id/held saved it. */
+export interface HeldCertification { provider: string; code: string; title: string; yearObtained: number | null; evidence: string; catalogMatch: { certificationId: string | null; code: string } | null; saved: boolean }
+export interface IntakeResult { profileSummary: string; detectedSkills: string[]; goals: string[]; heldCertifications: HeldCertification[]; recommendations: IntakeRecommendation[]; followUpQuestions: string[] }
+export interface IntakeSessionDto { id: string; status: 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'; inputText: string; attachments: { name: string; mimeType: string; size: number; chars: number }[]; result: IntakeResult | null; error: string | null; jobId: string | null; createdAt: string }
